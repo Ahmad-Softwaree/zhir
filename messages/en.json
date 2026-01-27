@@ -1,0 +1,76 @@
+{
+  "langs": {
+    "en": "English",
+    "ar": "العربية",
+    "ckb": "کوردی"
+  },
+
+  "header": {
+    "home": "Home",
+    "login": "Login",
+    "signUp": "Sign Up",
+    "projectName": "AI Chat"
+  },
+
+  "footer": {
+    "rights": "All rights reserved",
+    "github": "GitHub",
+    "portfolio": "Portfolio"
+  },
+
+  "home": {
+    "hero": {
+      "title": "Your AI-Powered Conversation Partner",
+      "subtitle": "Experience intelligent conversations with cutting-edge artificial intelligence. Get answers, explore ideas, and unlock creativity.",
+      "poweredBy": "Powered by GPT",
+      "goToChat": "Go to Chat",
+      "learnMore": "Learn More",
+      "features": {
+        "intelligentResponses": {
+          "title": "Intelligent Responses",
+          "description": "Get accurate, context-aware answers powered by advanced AI"
+        },
+        "naturalDialogue": {
+          "title": "Natural Dialogue",
+          "description": "Experience human-like conversations that understand context"
+        },
+        "alwaysLearning": {
+          "title": "Always Learning",
+          "description": "Continuously improving to provide better assistance"
+        }
+      }
+    }
+  },
+
+  "common": {
+    "deleteDialog": {
+      "title": "Are you sure?",
+      "description": "This action cannot be undone. This will permanently delete this item.",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "deleting": "Deleting..."
+    },
+    "no_data": "No Data Available",
+    "no_data_found": "We couldn't find any data to display. Try adjusting your filters or adding new items."
+  },
+
+  "pagination": {
+    "showing": "Showing",
+    "of": "of",
+    "previous": "Previous",
+    "next": "Next"
+  },
+
+  "error": {
+    "title": "Oops! Something Went Wrong",
+    "description": "We encountered an unexpected error. Don't worry, our team has been notified and we're working on it.",
+    "tryAgain": "Try Again",
+    "returnHome": "Return Home",
+    "errorDetails": "Error Details"
+  },
+  "notFound": {
+    "pageNotFound": "Page Not Found",
+    "pageNotFoundDescription": "The page you're looking for seems to have wandered off. Let's get you back on track.",
+    "returnHome": "Return Home"
+  }
+}
