@@ -6,6 +6,9 @@ export const ENUMs = {
   TAGS: {},
   PAGES: {
     HOME: "/",
+    SIGNIN: "/signin",
+    SIGNUP: "/signup",
+    CHAT: "/chat",
   },
 } as const;
 

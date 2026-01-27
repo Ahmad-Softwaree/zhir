@@ -2,15 +2,26 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Home, LogIn, Sparkles } from "lucide-react";
+import { Home, LogIn, LogOut, Sparkles, MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
 import { Button } from "@/components/ui/button";
 import { ENUMs } from "@/lib/enums";
 import { usePathname } from "@/i18n/navigation";
+import { useUser } from "@auth0/nextjs-auth0/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Header() {
+  const { user, isLoading } = useUser();
   const t = useTranslations();
   const pathname = usePathname();
   const isHomePage = pathname === ENUMs.PAGES.HOME;
@@ -40,27 +51,85 @@ export default function Header() {
 
         <div className="flex items-center gap-1.5 md:gap-2">
           {/* Auth Buttons */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hover:bg-primary/10 hover:text-primary transition-colors"
-              asChild>
-              <Link href="/login">
-                <LogIn className="h-4 w-4 mr-2" />
-                {t("header.login")}
-              </Link>
-            </Button>
-            <Button
-              size="sm"
-              className="bg-gradient-to-r from-primary to-secondary hover:shadow-lg hover:shadow-primary/30 transition-all duration-300"
-              asChild>
-              <Link href="/signup">
-                <Sparkles className="h-4 w-4 mr-2" />
-                {t("header.signUp")}
-              </Link>
-            </Button>
-          </div>
+          {!isLoading && (
+            <div className="flex items-center gap-2">
+              {!user ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="hover:bg-primary/10 hover:text-primary transition-colors"
+                    asChild>
+                    <Link href={ENUMs.PAGES.SIGNIN}>
+                      <LogIn className="h-4 w-4 mr-2" />
+                      {t("header.signIn")}
+                    </Link>
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-gradient-to-r from-primary to-secondary hover:shadow-lg hover:shadow-primary/30 transition-all duration-300"
+                    asChild>
+                    <Link href={ENUMs.PAGES.SIGNUP}>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      {t("header.signUp")}
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="hover:bg-primary/10 hover:text-primary transition-colors"
+                    asChild>
+                    <Link href={ENUMs.PAGES.CHAT}>
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      {t("header.chat")}
+                    </Link>
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="relative h-9 w-9 rounded-full">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage
+                            src={user.picture || ""}
+                            alt={user.name || ""}
+                          />
+                          <AvatarFallback>
+                            {user.name?.charAt(0).toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className="w-56"
+                      align="end"
+                      forceMount>
+                      <DropdownMenuLabel className="font-normal">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium leading-none">
+                            {user.name}
+                          </p>
+                          <p className="text-xs leading-none text-muted-foreground">
+                            {user.email}
+                          </p>
+                        </div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/api/auth/logout">
+                          <LogOut className="mr-2 h-4 w-4" />
+                          <span>{t("header.logout")}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              )}
+            </div>
+          )}
 
           {!isHomePage && (
             <Button

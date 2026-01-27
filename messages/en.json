@@ -7,9 +7,29 @@
 
   "header": {
     "home": "Home",
-    "login": "Login",
+    "signIn": "Sign In",
     "signUp": "Sign Up",
+    "chat": "Chat",
+    "logout": "Logout",
     "projectName": "AI Chat"
+  },
+
+  "auth": {
+    "or": "or",
+    "signin": {
+      "title": "Welcome Back",
+      "description": "Sign in to continue your AI conversations",
+      "button": "Sign In with Auth0",
+      "noAccount": "Don't have an account?",
+      "signUpLink": "Sign up"
+    },
+    "signup": {
+      "title": "Get Started",
+      "description": "Create an account to start chatting with AI",
+      "button": "Sign Up with Auth0",
+      "hasAccount": "Already have an account?",
+      "signInLink": "Sign in"
+    }
   },
 
   "footer": {
