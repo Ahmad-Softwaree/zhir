@@ -1,6 +1,5 @@
 "use server";
-// TODO: Replace with Auth0 authentication
-// import { auth } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 import { TAGs } from "../enums";
 import { isFileForm, buildFormData } from "../functions";
 import { getLocale } from "next-intl/server";
@@ -14,17 +13,20 @@ type FetchOptions = {
 
 const getHeaders = async (options?: FetchOptions, isFormData?: boolean) => {
   const locale = await getLocale();
-  // TODO: Replace with Auth0 session retrieval
-  // const { userId } = await auth();
+  const cookieStore = await cookies();
+
+  const cookieHeader = cookieStore
+    .getAll()
+    .map((cookie) => `${cookie.name}=${cookie.value}`)
+    .join("; ");
   const headers: Record<string, string> = {
     "Content-Type": isFormData ? "" : "application/json",
     "x-locale": locale,
     ...options?.headers,
   };
-  // TODO: Add Auth0 session token to headers
-  // if (userId) {
-  //   headers.Cookie = `session=${userId}`;
-  // }
+  if (cookieHeader) {
+    headers.Cookie = cookieHeader;
+  }
   return headers;
 };
 
@@ -86,18 +88,16 @@ export async function post<T = any>(
 
   return response.json();
 }
-
-export async function update<T = any>(
+export async function postStream(
   path: string,
   data?: any,
   options?: { tags?: TAGs[]; revalidate?: number | false }
-): Promise<T> {
+): Promise<Response> {
   const hasFiles = isFileForm(data);
   const formData = hasFiles ? buildFormData(data) : data;
   const isFormDataInstance = formData instanceof FormData;
-
   const response = await fetch(`${baseURL}${path}`, {
-    method: "PUT",
+    method: "POST",
     credentials: "include",
     headers: await getHeaders(options, isFormDataInstance),
     body: isFormDataInstance
@@ -107,7 +107,6 @@ export async function update<T = any>(
       : undefined,
     next: options,
   });
-
   if (!response.ok) {
     const error = await response.json().catch(() => ({
       message: response.statusText,
@@ -120,9 +119,8 @@ export async function update<T = any>(
     } as any;
   }
 
-  return response.json();
+  return response;
 }
-
 export async function del<T = any>(
   path: string,
   id: string | number,

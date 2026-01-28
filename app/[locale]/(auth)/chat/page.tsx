@@ -1,7 +1,9 @@
-import React from "react";
+import WelcomeMessage from "@/components/chat/WelcomeMessage";
 
-const page = () => {
-  return <div>page</div>;
-};
-
-export default page;
+export default function page() {
+  return (
+    <div className="flex flex-col h-full">
+      <WelcomeMessage />
+    </div>
+  );
+}

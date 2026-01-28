@@ -3,14 +3,11 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ScrollToTop from "@/components/shared/scroll-to-top";
 import Providers from "./providers";
-import Header from "@/components/layouts/header";
-import Footer from "@/components/layouts/footer";
+
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { setRequestLocale } from "next-intl/server";
-import { PageTransition } from "@/components/shared/page-transition";
-
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
@@ -58,11 +55,7 @@ export default async function LocaleLayout({
         }  antialiased min-h-screen flex flex-col overflow-x-hidden`}>
         <NextIntlClientProvider>
           <Providers>
-            <Header />
-            <main className="flex-1 min-h-screen">
-              <PageTransition>{children}</PageTransition>
-            </main>
-            <Footer />
+            {children}
             <ScrollToTop />
           </Providers>
         </NextIntlClientProvider>

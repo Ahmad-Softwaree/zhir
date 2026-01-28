@@ -1,1 +1,7 @@
-export const URLs = {} as const;
+export const URLs = {
+  // Chat endpoints
+  CREATE_OR_UPDATE_CHAT: "/chat",
+  CREATE_NEW_CHAT: "/chat/new",
+  GET_CHAT: (id: string) => `/chat/${id}`,
+  GET_ALL_CHATS: "/chats",
+} as const;

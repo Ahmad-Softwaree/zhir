@@ -74,6 +74,26 @@
     "no_data_found": "We couldn't find any data to display. Try adjusting your filters or adding new items."
   },
 
+  "chat": {
+    "welcome": {
+      "title": "Ask Me Anything!",
+      "subtitle": "I'm here to help. Start a conversation and let's explore together.",
+      "hint": "Click the button above to start a new conversation",
+      "startNewChat": "Start New Chat",
+      "creating": "Creating..."
+    },
+    "input": {
+      "placeholder": "Type your message...",
+      "hint": "Press Enter to send, Shift + Enter for new line"
+    },
+    "sidebar": {
+      "title": "My Chats",
+      "newChat": "New Chat",
+      "totalChats": "Total Chats",
+      "footer": "Powered by AI Chat"
+    }
+  },
+
   "pagination": {
     "showing": "Showing",
     "of": "of",
