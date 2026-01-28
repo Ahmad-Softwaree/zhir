@@ -1,25 +1,27 @@
 # 🤖 Agent Instructions & Coding Standards
 
-This file contains **strict coding standards and architecture patterns** for the **AI Chat** project. All AI agents and developers **MUST** follow these rules to maintain consistency.
+This file contains **strict coding standards and architecture patterns** for the **Zhir AI Chat** project. All AI agents and developers **MUST** follow these rules to maintain consistency.
 
-## 📚 About AI Chat
+## 📚 About Zhir AI Chat
 
-**AI Chat** is a modern AI-powered conversation platform that provides intelligent responses using GPT technology. Users can have natural conversations with cutting-edge artificial intelligence.
+**Zhir AI Chat** is a modern AI-powered conversation platform that provides intelligent responses using OpenAI's GPT-3.5 Turbo with real-time streaming capabilities. Built by Ahmad Software.
 
 ### Core Features:
 
-- 💬 **AI Conversations** - Intelligent chat powered by GPT
-- 🔐 **Secure Authentication** - User accounts with Auth0 authentication
-- 👤 **User Profiles** - Manage account settings and preferences
-- 🌍 **Multi-language Support** - Available in English, Arabic, and Kurdish (CKB)
+- 💬 **Real-time AI Conversations** - GPT-3.5 Turbo with streaming responses
+- 🔐 **Secure Authentication** - Auth0 with session management
+- 💾 **Chat History** - Persistent conversations in MongoDB
+- 👤 **User Management** - Account creation and session handling
+- 🌍 **Multi-language Support** - English, Arabic, and Kurdish (CKB)
 - 🎨 **Modern UI** - Built with Next.js 16, Tailwind CSS 4, and shadcn/ui
 - 🌙 **Dark/Light Mode** - Seamless theme switching
+- 🗂️ **Chat Management** - Create, view, and delete conversations
 
-### Homepage Sections:
+### Application Structure:
 
-- **Hero Section** - Eye-catching banner with animated blobs showcasing AI capabilities
-- **Header** - Navigation with home, login, and sign-up buttons
-- **Footer** - Links and copyright information
+- **Landing Page** - Hero section with animated blobs and sign-in/sign-up buttons
+- **Chat Interface** - Real-time streaming chat with sidebar for conversation history
+- **Authentication** - Auth0-powered login and registration
 
 ---
 
@@ -53,36 +55,38 @@ This file contains **strict coding standards and architecture patterns** for the
 - **Lucide React** - Icon library
 - **cn() utility** from `@/lib/utils` - For conditional styling
 - **motion/react** - Animation library (use via reusable components in animate.tsx)
+- **Sonner** - Toast notifications (ONLY allowed toast library)
+- **Vaul** - Drawer component
+- **Recharts** - Chart library (if needed)
 
 #### **Data Fetching & State Management**
 
-- **Server Actions** (`"use server"`) - For all data mutations and form submissions
-- **React Query (@tanstack/react-query)** - Client-side state management (ONLY via Server Actions, never direct API calls)
-- **React Server Components (RSC)** - Default for initial data fetching
+- **Server Actions** (`"use server"`) - For all data mutations and API calls
+- **Server Components (RSC)** - Default for initial data fetching
+- **Zustand** - Client-side state management (for streaming chat, modals)
 - **Static Data** - For demo/placeholder content during development
 
 **CRITICAL Server Actions Pattern:**
 
-- Server Actions MUST be in `lib/react-query/actions/*.ts` files
+- Server Actions MUST be in `lib/actions/*.ts` files
 - Server Actions MUST return plain objects (serializable data only)
 - Server Actions MUST use error objects with `__isError` flag
 - Server Actions MUST check for `__isError` at each async step
 - See `docs/data-fetching-error-handling.md` for complete architecture
 
-**CRITICAL React Query Pattern:**
-
-- React Query hooks MUST be in `lib/react-query/queries/*.ts` files
-- Mutations MUST use Server Actions as `mutationFn`
-- Mutations MUST call `throwIfError(result)` to convert error objects to Error instances
-- NEVER make direct fetch/axios calls in mutations
-- See `docs/data-fetching-error-handling.md` for examples
-
 #### **Framework & Core**
 
-- **Next.js** - React framework (App Router)
+- **Next.js 16** - React framework (App Router)
+- **React 19** - Server Components support
 - **React Server Components (RSC)** - Default component pattern
 - **TypeScript** - All code must be TypeScript
 - **Bun** - Package manager and runtime (ONLY package manager allowed)
+
+#### **AI & Streaming**
+
+- **OpenAI SDK** - GPT-3.5 Turbo integration
+- **Streaming API** - Real-time AI response streaming
+- **TransformStream** - For processing streaming data
 
 #### **Forms & Validation**
 
@@ -132,7 +136,7 @@ This file contains **strict coding standards and architecture patterns** for the
 
 - ❌ Other UI libraries: Material-UI, Ant Design, Chakra UI, etc. (use shadcn/ui only)
 - ❌ Other form libraries: Formik (use react-hook-form with shadcn/ui Form)
-- ❌ Custom HTTP clients: axios, fetch wrappers (use Server Actions instead)
+- ❌ Custom HTTP clients: axios in client components (use Server Actions instead)
 - ❌ State management: Redux (Zustand is approved for client-only state)
 - ❌ CSS frameworks: Bootstrap, Bulma, Foundation, etc.
 - ❌ Icon libraries: Font Awesome, React Icons, Heroicons (use Lucide only)
@@ -141,7 +145,10 @@ This file contains **strict coding standards and architecture patterns** for the
 - ❌ Raw URL params: searchParams, useSearchParams, URLSearchParams (use nuqs only)
 - ❌ Other auth: Clerk, NextAuth.js, Auth.js, Passport.js (use Auth0 only)
 - ❌ Other ODMs/ORMs: TypeORM, Sequelize, Prisma, Drizzle (use Mongoose only)
-  Before adding ANY new library:
+- ❌ Other toast libraries: react-hot-toast, react-toastify (use Sonner only)
+- ❌ React Query: @tanstack/react-query (removed from project - use Server Actions + Zustand)
+
+Before adding ANY new library:
 
 1. Check if it's in the APPROVED list
 2. Check if existing approved libraries can solve the problem
@@ -200,15 +207,18 @@ npx shadcn@latest add dialog
 
 ## 🔄 Data Fetching & Error Handling Architecture
 
-server-first architecture\*\* for data fetching:
+**See:** [docs/data-fetching-error-handling.md](docs/data-fetching-error-handling.md)
+
+This project uses a **server-first architecture** for data fetching:
 
 1. **Server Components (RSC)** - Default for initial data fetching
-2. **Server Actions Layer** (`lib/react-query/actions/*.ts`) - Server-side mutations with `"use server"`
-3. **React Query Layer** (`lib/react-query/queries/*.ts`) - Client-side hooks for mutations and caching
+2. **Server Actions Layer** (`lib/actions/*.ts`) - Server-side mutations with `"use server"`
+3. **API Config Layer** (`lib/config/api.config.ts`) - Fetch wrappers with cookie handling
+4. **Zustand Stores** (`lib/store/*.ts`) - Client-side state for streaming and UI
 
 ### Critical Rules:
 
-**Server Actions (`lib/react-query/actions/*.ts`):**
+**Server Actions (`lib/actions/*.ts`):**
 
 - ✅ MUST have `"use server"` directive at the top
 - ✅ MUST return plain objects only (no Error instances)
@@ -217,22 +227,29 @@ server-first architecture\*\* for data fetching:
 - ❌ NEVER throw errors in Server Actions (not serializable)
 - ❌ NEVER use try/catch in Server Actions (return error objects instead)
 
-**React Query Mutations (`lib/react-query/queries/*.ts`):**
+**API Config Functions (`lib/config/api.config.ts`):**
 
-- ✅ MUST use Server Actions as `mutationFn`
-- ✅ MUST call `throwIfError(result)` after Server Action returns
-- ✅ MUST import `throwIfError` from `@/lib/error-handler`
-- ✅ MUST use `onError` handler to show toast notifications
+- ✅ MUST use `"use server"` directive
+- ✅ MUST handle cookies from request
+- ✅ MUST return error objects with `__isError` flag
+- ✅ MUST include locale headers
+- ❌ NEVER throw errors (return error objects)
+
+**Client Components:**
+
+- ✅ MUST use Server Actions for data mutations
+- ✅ MUST handle error objects returned from Server Actions
+- ✅ MUST use toast notifications for errors (Sonner)
+- ✅ CAN use Zustand for temporary UI state
 - ❌ NEVER make direct fetch/axios calls
-- ❌ NEVER handle errors in Server Actions (handle in React Query)
 
 **Example Pattern:**
 
 ```typescript
 // ❌ WRONG - Server Action
 "use server";
-export async function createExpense(data: ExpenseData) {
-  const result = await post(URLs.CREATE_EXPENSE, data);
+export async function createChat(data: ChatData) {
+  const result = await post(URLs.CREATE_CHAT, data);
   if (result.__isError) {
     throw new Error(result.message); // ❌ Can't serialize Error!
   }
@@ -241,26 +258,25 @@ export async function createExpense(data: ExpenseData) {
 
 // ✅ CORRECT - Server Action
 ("use server");
-export async function createExpense(data: ExpenseData) {
-  const result = await post(URLs.CREATE_EXPENSE, data);
+export async function createChat(data: ChatData) {
+  const result = await post(URLs.CREATE_CHAT, data);
   if (result && (result as any).__isError) {
     return result; // ✅ Return error object
   }
   return result;
 }
 
-// ✅ CORRECT - React Query Hook
-export const useCreateExpense = () => {
-  return useMutation({
-    mutationFn: async (data: ExpenseData) => {
-      const result = await createExpense(data);
-      return throwIfError(result); // ✅ Throw here (client-side)
-    },
-    onError: (error: ApiError) => {
-      toast.error(error.message); // ✅ Toast works!
-    },
-  });
-};
+// ✅ CORRECT - Client Component
+export function ChatForm() {
+  const handleSubmit = async (data: ChatData) => {
+    const result = await createChat(data);
+    if (result && (result as any).__isError) {
+      toast.error(result.message); // ✅ Toast works!
+      return;
+    }
+    toast.success("Chat created!");
+  };
+}
 ```
 
 ---
@@ -333,14 +349,14 @@ Before writing ANY code:
 
 - [ ] Am I using ONLY approved libraries?
 - [ ] Do I need to install a new shadcn/ui component?
-- [ ] Am I using NextAuth.js for authentication?
-- [ ] Am I using Server Actions + React Query for data mutations?
+- [ ] Am I using Auth0 for authentication?
+- [ ] Am I using Server Actions for data mutations?
 
 ### Data Fetching
 
 - [ ] Is this a Server Action? Does it have `"use server"`?
 - [ ] Am I returning error objects with `__isError` flag?
-- [ ] Am I using `throwIfError()` in React Query mutations?
+- [ ] Am I handling errors in client components with toast?
 - [ ] Did I check for `__isError` at each async step?
 
 ### Components
@@ -359,10 +375,9 @@ Before writing ANY code:
 
 ### Data Fetching
 
-- [ ] Did I create action file in `lib/react-query/actions/` (if needed)?
-- [ ] Did I create query hooks in `lib/react-query/queries/` (if needed)?
-- [ ] Did I add query keys to `lib/react-query/keys.ts` (if needed)?
+- [ ] Did I create action file in `lib/actions/` (if needed)?
 - [ ] Did I use Server Components for initial data fetching?
+- [ ] Did I use Zustand for streaming/UI state (if needed)?
 
 ### Code Quality
 
@@ -388,6 +403,10 @@ Before writing ANY code:
 | Auth config   | Auth0                 | `.env` and `lib/auth0.ts`               |
 | Route protect | Auth0 middleware      | `getSession()` / `withPageAuthRequired` |
 | User data     | Auth0                 | `getSession()` / `useUser()`            |
+| Toast         | Sonner                | `toast.error()` / `toast.success()`     |
+| Client state  | Zustand               | `lib/store/*.ts`                        |
+| Server action | "use server"          | `lib/actions/*.ts`                      |
+| Chat stream   | OpenAI SDK            | `/api/openai/route.ts`                  |
 
 ---
 
@@ -397,7 +416,8 @@ Before writing ANY code:
 
 - **[Component Organization](docs/component-organization.md)** - Component structure, folder organization, and file naming
 - **[UI Components](docs/ui-components.md)** - shadcn/ui component usage and styling
-- **[Authentication](docs/authentication.md)** - NextAuth.js setup, route protection, and security patterns
+- **[Authentication](docs/authentication.md)** - Auth0 setup, route protection, and security patterns
+- **[Data Fetching & Error Handling](docs/data-fetching-error-handling.md)** - Server Actions architecture
 - **[Cookie Management](docs/cookie-management.md)** - cookies-next usage for client and server cookies
 - **[Internationalization](docs/internationalization.md)** - next-intl setup and translation patterns
 - **[Theme (Dark/Light Mode)](docs/theme-dark-light-mode.md)** - next-themes configuration
@@ -406,6 +426,7 @@ Before writing ANY code:
 - **[Package Management](docs/package-management.md)** - Bun package manager guidelines
 - **[Folder & File Conventions](docs/folder-file-conventions.md)** - Naming and organization standards
 - **[Documentation Standards](docs/documentation-standards.md)** - How to write documentation
+- **[Auth0 Implementation Guide](docs/auth0-implementation-guide.md)** - Complete Auth0 setup guide
 
 ### Components
 

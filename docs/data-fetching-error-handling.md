@@ -1,6 +1,6 @@
 # 🔄 Data Fetching & Error Handling Architecture
 
-This document explains how data fetching, React Query, and error handling work together in this Next.js project, with a focus on **Server Actions** and proper error management in production.
+This document explains how data fetching and error handling work together in this Next.js project, with a focus on **Server Actions**, **Zustand**, and proper error management in production.
 
 ---
 
@@ -10,6 +10,7 @@ This document explains how data fetching, React Query, and error handling work t
 - [The Three-Layer System](#the-three-layer-system)
 - [Error Handling Pattern](#error-handling-pattern)
 - [Why Server Actions Can't Throw Errors](#why-server-actions-cant-throw-errors)
+- [Chat Streaming with Zustand](#chat-streaming-with-zustand)
 - [Step-by-Step Flow](#step-by-step-flow)
 - [Code Examples](#code-examples)
 - [Best Practices](#best-practices)
@@ -19,16 +20,17 @@ This document explains how data fetching, React Query, and error handling work t
 
 ## 🏗️ Architecture Overview
 
-Our data fetching architecture uses **Next.js Server Actions** combined with **React Query** for optimal performance and error handling:
+Our data fetching architecture uses **Next.js Server Actions** combined with **Zustand** for client-side streaming state:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    CLIENT SIDE                               │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │  React Query Mutations (queries/*.ts)                │   │
-│  │  - Calls Server Actions                              │   │
-│  │  - Throws errors using throwIfError()                │   │
-│  │  - Triggers onError/onSuccess handlers               │   │
+│  │  Client Components                                    │   │
+│  │  - Calls Server Actions directly                     │   │
+│  │  - Handles error objects with __isError flag         │   │
+│  │  - Shows toast notifications for errors              │   │
+│  │  - Uses Zustand for streaming UI state               │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
                             ↕
@@ -50,9 +52,9 @@ Our data fetching architecture uses **Next.js Server Actions** combined with **R
 └─────────────────────────────────────────────────────────────┘
                             ↕
 ┌─────────────────────────────────────────────────────────────┐
-│                 BACKEND API                                  │
-│  - NestJS REST API                                           │
-│  - Returns error responses with status codes                │
+│                 BACKEND API / MONGODB                        │
+│  - REST API endpoints or Direct MongoDB access              │
+│  - Returns data or error responses                          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -96,66 +98,71 @@ export async function post<T>(path: string, data?: any): Promise<T> {
 }
 ```
 
-### **Layer 2: Server Actions** (`lib/react-query/actions/*.ts`)
+### **Layer 2: Server Actions** (`lib/actions/*.ts`)
 
 Business logic functions that can be called from client components.
 
 **Key Features:**
 
 - `"use server"` directive
-- Handles authentication checks
-- Processes API responses
+- Handles authentication checks (via Auth0 session)
+- Processes API responses or MongoDB operations
 - **Returns error objects** when errors occur
 
 ```typescript
-export const login = async (form: LoginSchema) => {
+"use server";
+
+export async function getAllChats() {
   try {
-    const alreadyLogged = await alreadyLoggedIn();
-    if (alreadyLogged && (alreadyLogged as any).__isError) return alreadyLogged;
-
-    const data = await post(URLs.LOGIN, form);
-    if (data && (data as any).__isError) return data; // ✅ Return error object
-
-    await saveJWT(data.jwt);
-    await signIn("credentials", {
-      /* ... */
-    });
-    return form;
-  } catch (error: any) {
-    return handleServerError(error); // ✅ Return error object
+    let data = await get(URLs.GET_ALL_CHATS, { tags: [ENUMs.TAGS.CHATS] });
+    return data;
+  } catch (error) {
+    return handleServerError(error);
   }
-};
+}
+
+export async function createNewChat() {
+  try {
+    let data = await post(URLs.CREATE_NEW_CHAT, {});
+    if (data && !(data as any).__isError) {
+      revalidatePath(ENUMs.TAGS.CHATS);
+    }
+    return data;
+  } catch (error) {
+    return handleServerError(error);
+  }
+}
 ```
 
-### **Layer 3: React Query Mutations** (`lib/react-query/queries/*.ts`)
+### **Layer 3: Client Components**
 
-Client-side hooks that manage UI state and trigger Server Actions.
+Client-side components that call Server Actions and handle UI state.
 
 **Key Features:**
 
-- `"use client"` directive
-- Calls Server Actions
-- **Throws errors on client side** using `throwIfError()`
-- Handles success/error with toast notifications
+- `"use client"` directive (when needed)
+- Calls Server Actions directly
+- **Checks for `__isError` flag** in responses
+- Shows toast notifications for errors/success
+- Can use Zustand for local state
 
 ```typescript
-export const useLogin = () => {
-  const t = useTranslations();
+"use client";
 
-  return useMutation({
-    mutationFn: async (data: LoginSchema) => {
-      await loginMiddleware(i18n, data); // Validate first
-      const result = await login(data); // Call Server Action
-      return throwIfError(result); // ✅ Throw if error (CLIENT SIDE)
-    },
-    onSuccess: () => {
-      toast.success(t("messages.loginSuccess"));
-    },
-    onError: (error) => {
-      handleMutationError(error, t, "errors.login", (msg) => toast.error(msg));
-    },
-  });
-};
+export function ChatList() {
+  const handleDelete = async (id: string) => {
+    const result = await deleteChat(id);
+
+    if (result && (result as any).__isError) {
+      toast.error(result.message);
+      return;
+    }
+
+    toast.success("Chat deleted!");
+  };
+
+  return <Button onClick={() => handleDelete(chatId)}>Delete</Button>;
+}
 ```
 
 ---
@@ -222,7 +229,7 @@ We use a special flag to mark objects as errors:
 ### **Error Flow**
 
 ```
-1. Backend returns error
+1. Backend/MongoDB returns error
    { statusCode: 401, message: "Unauthorized" }
            ↓
 2. api.config catches it
@@ -231,79 +238,269 @@ We use a special flag to mark objects as errors:
 3. Server Action receives it
    Checks for __isError, returns error object (serializable)
            ↓
-4. React Query receives it
-   Calls throwIfError() which converts to Error instance
+4. Client Component receives it
+   Checks for __isError flag
            ↓
-5. Error instance thrown (CLIENT SIDE)
-   onError handler executes
-           ↓
-6. Toast notification shows
+5. Toast notification shows
    toast.error("Unauthorized") ✅
+```
+
+---
+
+## 💬 Chat Streaming with Zustand
+
+This project uses OpenAI's streaming API for real-time chat responses. State management for streaming is handled by **Zustand**.
+
+### **Streaming Architecture**
+
+```
+User Input → ChatInput.tsx → sendChat() → /api/openai
+                                              ↓
+                                    OpenAI Streaming API
+                                              ↓
+                                    Transform Stream
+                                              ↓
+                                  Zustand Store (chunks)
+                                              ↓
+                                    ChatMessages.tsx
+                                              ↓
+                                    Save to MongoDB
+```
+
+### **Zustand Store for Streaming**
+
+```typescript
+// lib/store/chat.store.ts
+interface ChatStore {
+  currentUserMessage: string;
+  currentAiResponse: string;
+  isStreaming: boolean;
+
+  setUserMessage: (message: string) => void;
+  appendToResponse: (chunk: string) => void;
+  setStreaming: (streaming: boolean) => void;
+  resetChat: () => void;
+}
+
+export const useChatStore = create<ChatStore>((set) => ({
+  currentUserMessage: "",
+  currentAiResponse: "",
+  isStreaming: false,
+
+  setUserMessage: (message: string) => {
+    set({
+      currentUserMessage: message,
+      currentAiResponse: "",
+      isStreaming: true,
+    });
+  },
+
+  appendToResponse: (chunk: string) => {
+    set((state) => ({
+      currentAiResponse: state.currentAiResponse + chunk,
+    }));
+  },
+
+  setStreaming: (streaming: boolean) => {
+    set({ isStreaming: streaming });
+  },
+
+  resetChat: () => {
+    set({
+      currentUserMessage: "",
+      currentAiResponse: "",
+      isStreaming: false,
+    });
+  },
+}));
+```
+
+### **Client-Side Streaming Function**
+
+```typescript
+// lib/actions/chat.action.ts
+export const sendChat = async (
+  message: string,
+  chatId: string | undefined,
+  onChunk?: (text: string) => void,
+  onComplete?: () => void
+) => {
+  const response = await fetch("/api/openai", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, chatId }),
+  });
+
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value);
+    onChunk?.(chunk); // Update Zustand store
+  }
+
+  onComplete?.(); // Reset streaming state
+};
+```
+
+### **OpenAI Streaming API Route**
+
+```typescript
+// app/api/openai/route.ts
+export async function POST(request: NextRequest) {
+  const session = await auth0.getSession(request);
+  if (!session) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+    });
+  }
+
+  const { message, chatId } = await request.json();
+  const userId = session.user.sub;
+
+  const stream = await client.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    messages: [
+      { role: "system", content: "You are Zhir AI assistant..." },
+      { role: "user", content: message },
+    ],
+    stream: true,
+  });
+
+  let fullResponse = "";
+
+  const customStream = new TransformStream({
+    async transform(chunk, controller) {
+      const content = chunk.choices[0]?.delta?.content || "";
+      if (content) {
+        fullResponse += content;
+        controller.enqueue(encoder.encode(content));
+      }
+    },
+  });
+
+  // Stream to client while saving to MongoDB
+  return new Response(stream.toReadableStream().pipeThrough(customStream), {
+    headers: { "Content-Type": "text/event-stream" },
+  });
+}
+```
+
+### **Using Streaming in Components**
+
+```typescript
+// components/chat/ChatInput.tsx
+const ChatInput = () => {
+  const { id } = useParams();
+  const [input, setInput] = useState("");
+  const { setUserMessage, appendToResponse, setStreaming, resetChat } =
+    useChatStore();
+
+  const handleSubmit = async () => {
+    const userMessage = input.trim();
+    setInput("");
+    setUserMessage(userMessage); // Set user message in Zustand
+
+    await sendChat(
+      userMessage,
+      id ? String(id) : undefined,
+      (chunk) => {
+        appendToResponse(chunk); // Append each chunk to AI response
+      },
+      () => {
+        setStreaming(false); // Mark streaming as complete
+        resetChat(); // Clear streaming state
+      }
+    );
+  };
+
+  return <Textarea value={input} onChange={(e) => setInput(e.target.value)} />;
+};
 ```
 
 ---
 
 ## 📝 Step-by-Step Flow
 
-### **1. User Submits Form**
+### **1. User Submits Chat Message**
 
 ```tsx
-<form onSubmit={loginMutation.mutate(formData)}>
+<ChatInput onSubmit={handleSubmit} />
 ```
 
-### **2. React Query Calls Server Action**
+### **2. Client Component Calls Streaming Function**
 
 ```typescript
-mutationFn: async (data: LoginSchema) => {
-  await loginMiddleware(i18n, data); // Validate on client first
-  const result = await login(data); // Call Server Action
-  return throwIfError(result); // Check for errors
+const handleSubmit = async () => {
+  setUserMessage(message); // Update Zustand
+
+  await sendChat(
+    message,
+    chatId,
+    (chunk) => appendToResponse(chunk), // Stream chunks to Zustand
+    () => setStreaming(false) // Complete
+  );
 };
 ```
 
-### **3. Server Action Processes Request**
+### **3. API Route Streams from OpenAI**
 
 ```typescript
-export const login = async (form: LoginSchema) => {
-  // Check if already logged in
-  const alreadyLogged = await alreadyLoggedIn();
-  if (alreadyLogged?.__isError) return alreadyLogged;
+const stream = await openai.chat.completions.create({
+  model: "gpt-3.5-turbo",
+  messages: [{ role: "user", content: message }],
+  stream: true,
+});
 
-  // Make API call
-  const data = await post(URLs.LOGIN, form);
-  if (data?.__isError) return data; // Return error if present
-
-  // Success - save JWT and sign in
-  await saveJWT(data.jwt);
-  await signIn("credentials", {
-    /* ... */
-  });
-  return form;
-};
+return new Response(stream.toReadableStream());
 ```
 
-### **4. API Config Makes Request**
+### **4. Component Receives Chunks**
 
 ```typescript
-const response = await fetch(`${baseURL}/auth/login`, {
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+
+  const chunk = decoder.decode(value);
+  appendToResponse(chunk); // Update UI in real-time
+}
+```
+
+### **5. Save to MongoDB After Completion**
+
+```typescript
+await fetch("/api/chat", {
   method: "POST",
-  body: JSON.stringify(form),
+  body: JSON.stringify({
+    chatId,
+    userMessage: message,
+    aiResponse: fullResponse,
+  }),
+});
+```
+
+body: JSON.stringify(form),
 });
 
 if (!response.ok) {
-  const error = await response.json();
-  return { __isError: true, ...error, statusCode: response.status };
+const error = await response.json();
+return { \_\_isError: true, ...error, statusCode: response.status };
 }
 
 return response.json();
-```
+
+````
 
 ### **5. Error Object Returns to Client**
 
 ```typescript
 // Result has __isError flag
 { __isError: true, statusCode: 401, message: "Invalid credentials" }
-```
+````
 
 ### **6. throwIfError() Converts to Error**
 
@@ -483,158 +680,249 @@ if (result?.__isError) return result;
 const result = await someAction();
 ```
 
-### **2. Use throwIfError in Mutations**
+### **2. Handle Errors in Client Components**
 
-Always throw errors on the client side:
-
-```typescript
-// ✅ GOOD
-mutationFn: async (data) => {
-  const result = await serverAction(data);
-  return throwIfError(result);
-};
-
-// ❌ BAD - errors won't trigger onError
-mutationFn: async (data) => {
-  return await serverAction(data);
-};
-```
-
-### **3. Handle Specific Error Cases**
-
-Check for special error messages before generic handling:
-
-```typescript
-onError: (error, variables) => {
-  // Special cases first
-  if (error.message === "ACCOUNT_NOT_VERIFIED") {
-    toast.info(t("messages.accountNotVerified"));
-    router.push(`/verify?email=${variables.email}`);
-    return;
-  }
-
-  if (error.message === "TWO_FACTOR_REQUIRED") {
-    // Show 2FA modal
-    return;
-  }
-
-  // Generic error handling last
-  handleMutationError(error, t, "errors.default", (msg) => toast.error(msg));
-};
-```
-
-### **4. Return Serializable Objects**
-
-Never throw in Server Actions:
+Always check for error objects when calling Server Actions:
 
 ```typescript
 // ✅ GOOD
-export const someAction = async () => {
-  try {
-    const data = await apiCall();
-    if (data?.__isError) return data;
-    return data;
-  } catch (error) {
-    return handleServerError(error); // Returns object
+const handleSubmit = async (data) => {
+  const result = await createChat(data);
+  if (result?.__isError) {
+    toast.error(result.message);
+    return;
   }
+  toast.success("Chat created!");
 };
 
-// ❌ BAD
-export const someAction = async () => {
-  try {
-    return await apiCall();
-  } catch (error) {
-    throw new Error("Failed"); // Can't serialize!
-  }
+// ❌ BAD - errors won't show to user
+const handleSubmit = async (data) => {
+  const result = await createChat(data);
+  toast.success("Chat created!");
 };
 ```
 
-### **5. Use Middleware for Validation**
+### **3. Use Zustand for Streaming State**
 
-Validate on client before calling Server Actions:
+For real-time updates (like AI streaming), use Zustand:
 
 ```typescript
-mutationFn: async (data) => {
-  await loginMiddleware(i18n, data); // Validates and shows errors early
-  const result = await login(data);
-  return throwIfError(result);
-};
+// ✅ GOOD - Zustand store for streaming
+const useChatStore = create<ChatStore>((set) => ({
+  currentAiResponse: "",
+  appendToResponse: (chunk: string) => {
+    set((state) => ({
+      currentAiResponse: state.currentAiResponse + chunk,
+    }));
+  },
+}));
+
+// ❌ BAD - useState causes too many re-renders
+const [response, setResponse] = useState("");
+setResponse((prev) => prev + chunk); // Re-renders entire component
+```
+
+### **4. Return Error Objects, Never Throw**
+
+In Server Actions, always return error objects:
+
+```typescript
+// ✅ GOOD
+"use server";
+export async function createChat(data) {
+  try {
+    const result = await post(URLs.CREATE_CHAT, data);
+    if (result?.__isError) return result;
+    return result;
+  } catch (error) {
+    return handleServerError(error);
+  }
+}
+
+// ❌ BAD - throws won't serialize
+("use server");
+export async function createChat(data) {
+  const result = await post(URLs.CREATE_CHAT, data);
+  if (!result.success) {
+    throw new Error("Failed"); // ❌ Won't work in production
+  }
+  return result;
+}
+```
+
+### **5. Use Server Components for Initial Data**
+
+Fetch data in Server Components when possible:
+
+```typescript
+// ✅ GOOD - Server Component
+export default async function ChatPage({ params }) {
+  const { id } = await params;
+  const chat = await getChat(id); // Direct Server Action call
+
+  return <ChatMessages data={chat} />;
+}
+
+// ❌ BAD - Unnecessary client-side fetching
+("use client");
+export default function ChatPage({ params }) {
+  const [chat, setChat] = useState(null);
+
+  useEffect(() => {
+    getChat(params.id).then(setChat); // Could be Server Component
+  }, []);
+
+  return <ChatMessages data={chat} />;
+}
+```
+
+### **6. Use API Routes for Streaming**
+
+For streaming responses (OpenAI, file uploads), use API routes:
+
+```typescript
+// ✅ GOOD - API route for streaming
+// app/api/openai/route.ts
+export async function POST(request: NextRequest) {
+  const session = await auth0.getSession(request);
+  if (!session) return new Response("Unauthorized", { status: 401 });
+
+  const stream = await openai.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    messages: [...],
+    stream: true,
+  });
+
+  return new Response(stream.toReadableStream());
+}
+
+// ❌ BAD - Server Actions can't stream
+"use server";
+export async function streamChat(message: string) {
+  // Can't return ReadableStream from Server Action
+}
 ```
 
 ---
 
-## 🚨 Common Pitfalls
+## 🚫 Common Pitfalls
 
-### **Pitfall 1: Throwing Errors in Server Actions**
+### **1. Using React Query with Server Actions**
+
+```typescript
+// ❌ WRONG - React Query removed from project
+import { useQuery } from "@tanstack/react-query";
+
+export const useChats = () => {
+  return useQuery({
+    queryKey: ["chats"],
+    queryFn: () => getAllChats(),
+  });
+};
+
+// ✅ CORRECT - Server Component or direct Server Action call
+export default async function ChatsPage() {
+  const chats = await getAllChats();
+  return <ChatList data={chats} />;
+}
+```
+
+### **2. Throwing Errors in Server Actions**
 
 ```typescript
 // ❌ WRONG
-export const login = async (form: LoginSchema) => {
-  throw new Error("Failed"); // Won't work in production!
-};
+"use server";
+export async function deleteChat(id: string) {
+  const result = await del(URLs.DELETE_CHAT, id);
+  if (result.__isError) {
+    throw new Error(result.message); // Won't serialize!
+  }
+  return result;
+}
 
 // ✅ CORRECT
-export const login = async (form: LoginSchema) => {
-  return handleServerError({ message: "Failed", statusCode: 500 });
-};
-```
-
-### **Pitfall 2: Not Checking for Errors**
-
-```typescript
-// ❌ WRONG - Error might not propagate
-export const updateProfile = async (data) => {
-  const user = await getUser();
-  const result = await updateUser(user.id, data);
-  return result;
-};
-
-// ✅ CORRECT - Check each step
-export const updateProfile = async (data) => {
-  const user = await getUser();
-  if (user?.__isError) return user;
-
-  const result = await updateUser(user.id, data);
-  if (result?.__isError) return result;
-
-  return result;
-};
-```
-
-### **Pitfall 3: Forgetting throwIfError**
-
-```typescript
-// ❌ WRONG - onError won't trigger
-mutationFn: async (data) => {
-  return await login(data);
-};
-
-// ✅ CORRECT - Error gets thrown
-mutationFn: async (data) => {
-  const result = await login(data);
-  return throwIfError(result);
-};
-```
-
-### **Pitfall 4: Using try-catch in Mutations**
-
-```typescript
-// ❌ WRONG - Catches errors that should trigger onError
-mutationFn: async (data) => {
+("use server");
+export async function deleteChat(id: string) {
   try {
-    const result = await login(data);
-    return throwIfError(result);
+    const result = await del(URLs.DELETE_CHAT, id);
+    if (result && !(result as any).__isError) {
+      revalidatePath(ENUMs.TAGS.CHATS);
+    }
+    return result;
   } catch (error) {
-    console.error(error);
-    return null; // onError won't run!
+    return handleServerError(error);
   }
+}
+```
+
+### **3. Not Checking for `__isError`**
+
+```typescript
+// ❌ WRONG - Ignores errors
+const handleDelete = async (id: string) => {
+  await deleteChat(id);
+  toast.success("Deleted!"); // Shows even if error occurred
 };
 
-// ✅ CORRECT - Let errors propagate
-mutationFn: async (data) => {
-  const result = await login(data);
-  return throwIfError(result);
+// ✅ CORRECT - Checks for errors
+const handleDelete = async (id: string) => {
+  const result = await deleteChat(id);
+  if (result?.__isError) {
+    toast.error(result.message);
+    return;
+  }
+  toast.success("Deleted!");
 };
+```
+
+### **4. Using fetch Instead of Server Actions**
+
+```typescript
+// ❌ WRONG - Direct fetch in client component
+"use client";
+export function ChatList() {
+  const [chats, setChats] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/chats").then(res => res.json()).then(setChats);
+  }, []);
+
+  return <div>{chats.map(chat => ...)}</div>;
+}
+
+// ✅ CORRECT - Server Component with Server Action
+export default async function ChatsPage() {
+  const chats = await getAllChats();
+  return <ChatList data={chats} />;
+}
+```
+
+### **5. useState for Streaming Instead of Zustand**
+
+```typescript
+// ❌ WRONG - Too many re-renders
+"use client";
+export function ChatMessages() {
+  const [response, setResponse] = useState("");
+
+  const handleStream = async () => {
+    await sendChat(message, chatId, (chunk) => {
+      setResponse((prev) => prev + chunk); // Re-renders entire component!
+    });
+  };
+}
+
+// ✅ CORRECT - Zustand for efficient updates
+("use client");
+export function ChatMessages() {
+  const { currentAiResponse, appendToResponse } = useChatStore();
+
+  const handleStream = async () => {
+    await sendChat(message, chatId, (chunk) => {
+      appendToResponse(chunk); // Only updates store, minimal re-renders
+    });
+  };
+}
 ```
 
 ---
@@ -646,15 +934,32 @@ mutationFn: async (data) => {
 1. ✅ Server Actions return **plain objects**, never throw
 2. ✅ Use `__isError: true` flag to mark errors
 3. ✅ Always check for `__isError` in Server Actions
-4. ✅ Use `throwIfError()` in React Query mutations
-5. ✅ Handle errors with `onError` and show toasts
-6. ✅ Validate early with middleware
-7. ✅ Special error cases before generic handling
+4. ✅ Handle errors in client components with toast notifications
+5. ✅ Use **Zustand** for streaming state management
+6. ✅ Use **API routes** for OpenAI streaming
+7. ✅ Use **Server Components** for initial data fetching
+8. ✅ Use **Server Actions** for data mutations
 
 **The Pattern:**
 
 ```
-Server Action → Returns error object → React Query → throwIfError() → onError → Toast
+Client Component → Server Action → API Config → Backend/MongoDB
+                       ↓
+                  Error Object
+                       ↓
+            Client Component (toast)
+```
+
+**Streaming Pattern:**
+
+```
+User Input → ChatInput → sendChat() → /api/openai
+                                          ↓
+                                   OpenAI Stream
+                                          ↓
+                                   Zustand Store
+                                          ↓
+                               ChatMessages (UI)
 ```
 
 This architecture ensures:
@@ -662,14 +967,16 @@ This architecture ensures:
 - ✅ Errors work in production
 - ✅ Type-safe error handling
 - ✅ Proper error messages displayed
-- ✅ Security (no leaked server details)
+- ✅ Real-time AI streaming
+- ✅ Efficient state updates
 - ✅ Great user experience
 
 ---
 
 ## 📚 Related Documentation
 
-- [Authentication](./authentication.md)
-- [Cookie Management](./cookie-management.md)
-- [Internationalization](./internationalization.md)
-- [Backend Token Setup](./backend-token-setup.md)
+- [Authentication](./authentication.md) - Auth0 setup and patterns
+- [Component Organization](./component-organization.md) - Component structure
+- [Cookie Management](./cookie-management.md) - cookies-next usage
+- [Internationalization](./internationalization.md) - Multi-language support
+- [UI Components](./ui-components.md) - shadcn/ui usage
