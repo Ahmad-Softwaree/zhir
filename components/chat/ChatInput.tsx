@@ -61,7 +61,7 @@ const ChatInput = () => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             value={input}
-            disabled={isLoading}
+            disabled={isLoading || !Boolean(id)}
             className="resize-none min-h-[60px] max-h-[200px] pr-4 py-3 rounded-2xl border-2 focus-visible:ring-2 focus-visible:ring-primary transition-all"
             placeholder={t("input.placeholder")}
             rows={1}

@@ -2,7 +2,7 @@
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Card } from "../ui/card";
 import { Bot } from "lucide-react";
-
+import Markdown from "react-markdown";
 export const AiMessage = ({
   message,
   isStreaming,
@@ -10,6 +10,7 @@ export const AiMessage = ({
   message: string;
   isStreaming?: boolean;
 }) => {
+  console.log(message);
   return (
     <div className="flex gap-3">
       <Avatar>
@@ -18,12 +19,10 @@ export const AiMessage = ({
         </AvatarFallback>
       </Avatar>
       <Card className="p-4 max-w-[80%] bg-muted">
-        <p className="text-sm whitespace-pre-wrap">
-          {message}
-          {isStreaming && (
-            <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1" />
-          )}
-        </p>
+        <Markdown>{message}</Markdown>
+        {isStreaming && (
+          <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1" />
+        )}
       </Card>
     </div>
   );
