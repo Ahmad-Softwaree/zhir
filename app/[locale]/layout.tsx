@@ -23,9 +23,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FinanceTrack - Smart Expense Management",
+  title: "Zhir - AI Chat Assistant",
   description:
-    "Track expenses, manage budgets, and achieve your financial goals with our powerful expense management platform.",
+    "Zhir is an AI-powered chat assistant designed to help you with a variety of tasks, from answering questions to providing recommendations.",
 };
 
 export default async function LocaleLayout({

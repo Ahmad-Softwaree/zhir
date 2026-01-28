@@ -1,21 +1,29 @@
 "use client";
-import { Card } from "../ui/card";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  useSidebar,
 } from "../ui/sidebar";
 import { useLocale, useTranslations } from "next-intl";
-import { MessageSquare, Plus, Sparkles } from "lucide-react";
+import { Plus, Sparkles, Hash } from "lucide-react";
 import { Button } from "../ui/button";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { createNewChat } from "@/lib/actions/chat.server.action";
 import { toast } from "sonner";
 import { IChat } from "@/lib/db/models/Chat";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import NoData from "../shared/NoData";
+import ChatCard from "../cards/ChatCard";
 
 export type Chat = IChat & {
   id: string;
@@ -25,9 +33,10 @@ export type Chat = IChat & {
 const CustomSidebar = ({ chats }: { chats: Chat[] }) => {
   const locale = useLocale();
   const t = useTranslations("chat.sidebar");
-  const pathname = usePathname();
   const router = useRouter();
   const [creating, setCreating] = useState(false);
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   const handleNewChat = async () => {
     setCreating(true);
@@ -47,95 +56,122 @@ const CustomSidebar = ({ chats }: { chats: Chat[] }) => {
     }
   };
 
-  const handleChatClick = (chatId: string) => {
-    router.push(`/${locale}/chat/${chatId}`);
-  };
-
   return (
-    <Sidebar collapsible="icon" side={locale == "en" ? "left" : "right"}>
-      <SidebarRail />
+    <TooltipProvider delayDuration={0}>
+      <Sidebar collapsible="icon" side={locale == "en" ? "left" : "right"}>
+        <SidebarRail />
 
-      {/* Header */}
-      <SidebarHeader className="border-b p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="flex items-center gap-2 flex-1">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <h2 className="font-bold text-lg">{t("title")}</h2>
-          </div>
-        </div>
-        <Button
-          onClick={handleNewChat}
-          disabled={creating}
-          className="w-full gap-2"
-          variant="default">
-          <Plus className="h-4 w-4" />
-          {creating ? "Creating..." : t("newChat")}
-        </Button>
-      </SidebarHeader>
-
-      {/* Content */}
-      <SidebarContent className="p-3">
-        <div className="flex flex-col gap-2">
-          {chats.map((chat) => {
-            const isActive = pathname.includes(`/chat/${chat.id}`);
-
-            return (
-              <Card
-                key={chat.id}
-                onClick={() => handleChatClick(chat.id)}
-                className={cn(
-                  "p-4 cursor-pointer transition-all hover:shadow-md",
-                  isActive
-                    ? "bg-primary text-primary-foreground border-primary shadow-lg scale-[1.02]"
-                    : "hover:bg-muted/50"
-                )}>
-                <div className="flex items-start gap-3">
-                  <MessageSquare
-                    className={cn(
-                      "h-5 w-5 mt-0.5 flex-shrink-0",
-                      isActive
-                        ? "text-primary-foreground"
-                        : "text-muted-foreground"
-                    )}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div
-                      className={cn(
-                        "font-semibold text-sm mb-1 truncate",
-                        isActive ? "text-primary-foreground" : ""
-                      )}>
-                      {chat.title}
-                    </div>
-                    <div
-                      className={cn(
-                        "text-xs truncate",
-                        isActive
-                          ? "text-primary-foreground/80"
-                          : "text-muted-foreground"
-                      )}>
-                      {chat.lastMessage}
-                    </div>
+        {/* Header */}
+        <SidebarHeader
+          className={cn(
+            "border-b transition-all",
+            isCollapsed ? "p-2" : "p-4"
+          )}>
+          {!isCollapsed ? (
+            <>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-2 flex-1">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Sparkles className="h-4 w-4 text-primary" />
                   </div>
+                  <h2 className="font-bold text-lg">{t("title")}</h2>
                 </div>
-              </Card>
-            );
-          })}
-        </div>
-      </SidebarContent>
+              </div>
+              <Button
+                onClick={handleNewChat}
+                disabled={creating}
+                className="w-full gap-2"
+                variant="default">
+                <Plus className="h-4 w-4" />
+                {creating ? "Creating..." : t("newChat")}
+              </Button>
+            </>
+          ) : (
+            <div className="flex flex-col gap-2 items-center">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>{t("title")}</p>
+                </TooltipContent>
+              </Tooltip>
 
-      {/* Footer */}
-      <SidebarFooter className="border-t p-4">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">{t("totalChats")}</span>
-            <span className="font-semibold">{chats.length}</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleNewChat}
+                    disabled={creating}
+                    size="icon"
+                    className="h-9 w-9"
+                    variant="default">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>{creating ? "Creating..." : t("newChat")}</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )}
+        </SidebarHeader>
+
+        {/* Content */}
+        <SidebarContent
+          className={cn("transition-all", isCollapsed ? "p-2" : "p-3")}>
+          <div className="flex flex-col gap-2">
+            {chats.map((chat, index) => {
+              return (
+                <ChatCard key={chat.id} chat={chat} isCollapsed={isCollapsed} />
+              );
+            })}
+
+            {chats.length === 0 && !isCollapsed && <NoData />}
           </div>
-          <div className="text-xs text-muted-foreground text-center pt-2 border-t">
-            {t("footer")}
-          </div>
-        </div>
-      </SidebarFooter>
-    </Sidebar>
+        </SidebarContent>
+
+        {/* Footer */}
+        <SidebarFooter
+          className={cn(
+            "border-t transition-all",
+            isCollapsed ? "p-2" : "p-4"
+          )}>
+          {!isCollapsed ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{t("totalChats")}</span>
+                <span className="font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">
+                  {chats.length}
+                </span>
+              </div>
+              <div className="text-xs text-muted-foreground text-center pt-2 border-t">
+                {t("footer")}
+              </div>
+            </div>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex flex-col items-center justify-center">
+                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Hash className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-xs font-semibold text-primary mt-1">
+                    {chats.length}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>
+                  {t("totalChats")}: {chats.length}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </SidebarFooter>
+      </Sidebar>
+    </TooltipProvider>
   );
 };
 
