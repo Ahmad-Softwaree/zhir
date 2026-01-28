@@ -9,7 +9,7 @@ const ChatMessages = ({ data }: { data: IChat }) => {
 
   return (
     <div className="space-y-6">
-      {data.conversations.map((chat, index) => (
+      {data.conversations?.map((chat, index) => (
         <div key={index} className="space-y-4">
           <UserMessage message={chat.userMessage} />
           <AiMessage message={chat.aiResponse} />

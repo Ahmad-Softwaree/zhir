@@ -10,7 +10,11 @@ import {
 import { Card } from "../ui/card";
 import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "@/i18n/navigation";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Trash } from "lucide-react";
+import { Button } from "../ui/button";
+import { useState } from "react";
+import { deleteChat } from "@/lib/actions/chat.server.action";
+import { useParams } from "next/navigation";
 const ChatCard = ({
   chat,
   isCollapsed,
@@ -20,6 +24,8 @@ const ChatCard = ({
 }) => {
   const router = useRouter();
   const pathname = usePathname();
+  const { id } = useParams();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isActive = pathname.includes(`/chat/${chat.id}`);
 
@@ -90,6 +96,22 @@ const ChatCard = ({
             {chat.lastMessage}
           </div>
         </div>
+        <Button
+          disabled={isDeleting}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsDeleting(true);
+            deleteChat(chat.id).finally(() => setIsDeleting(false));
+
+            if (id === chat.id) {
+              router.push("/chat");
+            }
+          }}
+          asChild
+          variant="ghost"
+          size="icon">
+          <Trash className="h-4 w-4 text-muted-foreground hover:text-red-600" />
+        </Button>
       </div>
     </Card>
   );

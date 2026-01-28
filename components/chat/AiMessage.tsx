@@ -10,7 +10,6 @@ export const AiMessage = ({
   message: string;
   isStreaming?: boolean;
 }) => {
-  console.log(message);
   return (
     <div className="flex gap-3">
       <Avatar>

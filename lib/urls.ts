@@ -3,5 +3,6 @@ export const URLs = {
   CREATE_OR_UPDATE_CHAT: "/chat",
   CREATE_NEW_CHAT: "/chat/new",
   GET_CHAT: (id: string) => `/chat/${id}`,
+  DELETE_CHAT: "/chat",
   GET_ALL_CHATS: "/chats",
 } as const;
