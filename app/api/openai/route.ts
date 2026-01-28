@@ -20,9 +20,14 @@ export async function POST(request: NextRequest) {
 
     const { message, chatId } = await request.json();
     const userId = session.user.sub;
+    const systemPrompt: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
+      role: "system",
+      content:
+        "Your name is Zhir, an AI assistant that helps users with their questions. Created by Ahmad Software. Be polite and concise.",
+    };
     const stream = await client.chat.completions.create({
       model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: message }],
+      messages: [systemPrompt, { role: "user", content: message }],
       stream: true,
     });
 
