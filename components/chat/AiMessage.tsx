@@ -18,7 +18,7 @@ export const AiMessage = ({
         </AvatarFallback>
       </Avatar>
       <Card className="p-4 max-w-[80%] bg-muted">
-        <div className="prose prose-neutral dark:prose-invert whitespace-pre-wrap">
+        <div className="prose  dark:prose-invert">
           <Markdown>{message}</Markdown>
         </div>
         {isStreaming && (
