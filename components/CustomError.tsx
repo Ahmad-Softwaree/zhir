@@ -4,13 +4,7 @@ import { Home, RefreshCcw, AlertTriangle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 
-export default function Error({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
+export default function CustomError() {
   const t = useTranslations("error");
   const locale = useLocale();
 
@@ -45,7 +39,7 @@ export default function Error({
 
         <div className="max-w-lg mx-auto p-4 bg-destructive/10 rounded-lg border border-destructive/20">
           <p className="text-sm text-destructive font-mono text-left break-all">
-            {error.message}
+            An unexpected error has occurred.
           </p>
         </div>
 
@@ -54,7 +48,7 @@ export default function Error({
           <Button
             size="lg"
             className="min-w-[160px] rounded-full"
-            onClick={reset}>
+            onClick={() => window.location.reload()}>
             <RefreshCcw className="mr-2 h-5 w-5" />
             {t("tryAgain")}
           </Button>

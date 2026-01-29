@@ -6,9 +6,13 @@ import { Card } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { getAllChats } from "@/lib/actions/chat.server.action";
 import React from "react";
+import CustomError from "@/components/CustomError";
 
 const layout = async ({ children }: { children: React.ReactNode }) => {
   const data = await getAllChats();
+  if ((data as any).__isError) {
+    return <CustomError />;
+  }
   return (
     <SidebarProvider>
       <CustomSidebar chats={data} />

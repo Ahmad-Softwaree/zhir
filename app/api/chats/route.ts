@@ -28,9 +28,14 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json(formattedChats);
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      {
+        error:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Internal Server Error",
+      },
       { status: 500 }
     );
   }

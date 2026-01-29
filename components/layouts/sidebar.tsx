@@ -122,13 +122,13 @@ const CustomSidebar = ({ chats }: { chats: Chat[] }) => {
         <SidebarContent
           className={cn("transition-all", isCollapsed ? "p-2" : "p-3")}>
           <div className="flex flex-col gap-2">
-            {chats.map((chat, index) => {
+            {chats?.map((chat) => {
               return (
                 <ChatCard key={chat.id} chat={chat} isCollapsed={isCollapsed} />
               );
             })}
 
-            {chats.length === 0 && !isCollapsed && <NoData />}
+            {chats?.length === 0 && !isCollapsed && <NoData />}
           </div>
         </SidebarContent>
 

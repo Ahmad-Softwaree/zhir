@@ -22,10 +22,14 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ chat: newChat });
-  } catch (error) {
-    console.error("Error creating new chat:", error);
+  } catch (error: any) {
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      {
+        error:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Internal Server Error",
+      },
       { status: 500 }
     );
   }

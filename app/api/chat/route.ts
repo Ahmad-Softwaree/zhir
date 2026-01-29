@@ -51,9 +51,14 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(newChat);
     }
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      {
+        error:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Internal Server Error",
+      },
       { status: 500 }
     );
   }

@@ -30,10 +30,14 @@ export async function GET(
     }
 
     return NextResponse.json(chat);
-  } catch (error) {
-    console.error("Get chat error:", error);
+  } catch (error: any) {
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      {
+        error:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Internal Server Error",
+      },
       { status: 500 }
     );
   }
@@ -62,9 +66,14 @@ export async function DELETE(
       return NextResponse.json({ error: "Chat not found" }, { status: 404 });
     }
     return NextResponse.json({ message: "Chat deleted successfully" });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      {
+        error:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Internal Server Error",
+      },
       { status: 500 }
     );
   }
