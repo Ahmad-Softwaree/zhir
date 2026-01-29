@@ -14,14 +14,15 @@ export async function POST(request: NextRequest) {
 
     const userId = session.user.sub;
 
-    // Create a new empty chat with a default title
     const newChat = await Chat.create({
       userId,
       title: "New Chat",
       conversations: [],
     });
 
-    return NextResponse.json({ chat: newChat });
+    return NextResponse.json({
+      id: newChat._id,
+    });
   } catch (error: any) {
     return NextResponse.json(
       {

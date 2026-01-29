@@ -42,9 +42,9 @@ const CustomSidebar = ({ chats }: { chats: Chat[] }) => {
     setCreating(true);
     try {
       const result = await createNewChat();
-
-      if (result && !(result as any).__isError && result.chat) {
-        router.push(`/${locale}/chat/${result.chat.id}`);
+      console.log(result);
+      if (result && !(result as any).__isError) {
+        router.push(`/${locale}/chat/${result.id}`);
         router.refresh();
       } else {
         toast.error("Failed to create new chat. Please try again.");

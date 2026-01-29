@@ -33,7 +33,7 @@ export async function getAllChats() {
 
 export async function createNewChat() {
   try {
-    let data = await post(URLs.CREATE_NEW_CHAT, {});
+    let data = await post(URLs.CREATE_NEW_CHAT);
     if (data && !(data as any).__isError) {
       revalidatePath(ENUMs.TAGS.CHATS);
     }
