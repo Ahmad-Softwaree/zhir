@@ -5,4 +5,5 @@ export const URLs = {
   GET_CHAT: (id: string) => `/chat/${id}`,
   DELETE_CHAT: "/chat",
   GET_ALL_CHATS: "/chats",
+  OPEN_AI: "/openai",
 } as const;

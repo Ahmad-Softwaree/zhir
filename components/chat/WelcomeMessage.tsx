@@ -23,10 +23,10 @@ const WelcomeMessage = () => {
         router.push(`/${locale}/chat/${result.id}`);
         router.refresh();
       } else {
-        toast.error("Failed to create new chat. Please try again.");
+        toast.error(t("errors.createChatFailed"));
       }
     } catch (error) {
-      toast.error("Failed to create new chat. Please try again.");
+      toast.error(t("errors.createChatFailed"));
     } finally {
       setIsCreating(false);
     }

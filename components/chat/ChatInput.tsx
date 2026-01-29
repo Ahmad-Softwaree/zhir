@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { Send, Loader2 } from "lucide-react";
@@ -7,15 +7,30 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { sendChat } from "@/lib/actions/chat.action";
 import { useChatStore } from "@/lib/store/chat.store";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { handleMutationError } from "@/lib/error-handler";
 
 const ChatInput = () => {
   const { id } = useParams();
+  const router = useRouter();
   const t = useTranslations("chat");
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { setUserMessage, appendToResponse, setStreaming, resetChat } =
-    useChatStore();
+  const {
+    setUserMessage,
+    appendToResponse,
+    setStreaming,
+    resetChat,
+    newChatId,
+    setNewChatId,
+  } = useChatStore();
+
+  useEffect(() => {
+    if (newChatId && !isLoading) {
+      router.push(`/chat/${newChatId}`);
+      setNewChatId(null);
+    }
+  }, [newChatId, isLoading, router, setNewChatId]);
 
   const handleSubmit = async () => {
     if (!input.trim()) return;
@@ -37,10 +52,18 @@ const ChatInput = () => {
           setStreaming(false);
           setIsLoading(false);
           resetChat();
+        },
+        (chatId) => {
+          if (!id) {
+            setNewChatId(chatId);
+          }
         }
       );
     } catch (error) {
-      toast.error("Failed to send message. Please try again.");
+      console.log(error);
+      handleMutationError(error, t, t("errors.sendMessageFailed"), (msg) => {
+        toast.error(msg);
+      });
       setIsLoading(false);
       setStreaming(false);
     }
@@ -61,7 +84,7 @@ const ChatInput = () => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             value={input}
-            disabled={isLoading || !Boolean(id)}
+            disabled={isLoading}
             className="resize-none min-h-[60px] max-h-[200px] pr-4 py-3 rounded-2xl border-2 focus-visible:ring-2 focus-visible:ring-primary transition-all"
             placeholder={t("input.placeholder")}
             rows={1}

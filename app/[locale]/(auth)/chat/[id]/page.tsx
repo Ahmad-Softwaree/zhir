@@ -13,7 +13,7 @@ export default async function page({
     return <CustomError />;
   }
   return (
-    <div className="flex-1 overflow-y-auto p-6 ">
+    <div className="flex-1 flex flex-col overflow-y-auto p-6">
       <ChatMessages data={data} />
     </div>
   );

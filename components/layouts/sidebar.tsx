@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/tooltip";
 import NoData from "../shared/NoData";
 import ChatCard from "../cards/ChatCard";
+import { useChatStore } from "@/lib/store/chat.store";
 
 export type Chat = IChat & {
   id: string;
@@ -33,8 +34,10 @@ export type Chat = IChat & {
 const CustomSidebar = ({ chats }: { chats: Chat[] }) => {
   const locale = useLocale();
   const t = useTranslations("chat.sidebar");
+  const chat_t = useTranslations("chat");
   const router = useRouter();
   const [creating, setCreating] = useState(false);
+  const { isStreaming } = useChatStore();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
@@ -46,10 +49,10 @@ const CustomSidebar = ({ chats }: { chats: Chat[] }) => {
         router.push(`/${locale}/chat/${result.id}`);
         router.refresh();
       } else {
-        toast.error("Failed to create new chat. Please try again.");
+        toast.error(chat_t("errors.createChatFailed"));
       }
     } catch (error) {
-      toast.error("Failed to create new chat. Please try again.");
+      toast.error(chat_t("errors.createChatFailed"));
     } finally {
       setCreating(false);
     }
@@ -77,8 +80,15 @@ const CustomSidebar = ({ chats }: { chats: Chat[] }) => {
                 </div>
               </div>
               <Button
+                onClick={() => router.push(`/${locale}/chat`)}
+                disabled={creating || isStreaming}
+                className="w-full gap-2"
+                variant="default">
+                {t("chat")}
+              </Button>
+              <Button
                 onClick={handleNewChat}
-                disabled={creating}
+                disabled={creating || isStreaming}
                 className="w-full gap-2"
                 variant="default">
                 <Plus className="h-4 w-4" />
@@ -102,7 +112,7 @@ const CustomSidebar = ({ chats }: { chats: Chat[] }) => {
                 <TooltipTrigger asChild>
                   <Button
                     onClick={handleNewChat}
-                    disabled={creating}
+                    disabled={creating || isStreaming}
                     size="icon"
                     className="h-9 w-9"
                     variant="default">

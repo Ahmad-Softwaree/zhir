@@ -1,10 +1,8 @@
 "use client";
 import { Chat } from "../layouts/sidebar";
-import { useLocale } from "next-intl";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Card } from "../ui/card";
@@ -15,6 +13,7 @@ import { Button } from "../ui/button";
 import { useState } from "react";
 import { deleteChat } from "@/lib/actions/chat.server.action";
 import { useParams } from "next/navigation";
+import { useChatStore } from "@/lib/store/chat.store";
 const ChatCard = ({
   chat,
   isCollapsed,
@@ -26,10 +25,12 @@ const ChatCard = ({
   const pathname = usePathname();
   const { id } = useParams();
   const [isDeleting, setIsDeleting] = useState(false);
+  const { isStreaming } = useChatStore();
 
   const isActive = pathname.includes(`/chat/${chat.id}`);
 
   const handleChatClick = (chatId: string) => {
+    if (isStreaming) return;
     router.push(`/chat/${chatId}`);
   };
 
@@ -97,7 +98,7 @@ const ChatCard = ({
           </div>
         </div>
         <Button
-          disabled={isDeleting}
+          disabled={isDeleting || isStreaming}
           onClick={(e) => {
             e.stopPropagation();
             setIsDeleting(true);

@@ -88,9 +88,14 @@
     },
     "sidebar": {
       "title": "My Chats",
+      "chat": "Chat",
       "newChat": "New Chat",
       "totalChats": "Total Chats",
       "footer": "Powered by AI Chat"
+    },
+    "errors": {
+      "createChatFailed": "Failed to create new chat. Please try again.",
+      "sendMessageFailed": "Failed to send message. Please try again."
     }
   },
 

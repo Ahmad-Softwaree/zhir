@@ -122,7 +122,11 @@ export function handleMutationError(
 
     fields.forEach((f: { field: string; messages: string[] }) => {
       f.messages.forEach((msg) => {
-        const translated = t(msg) || msg;
+        let havMsg = t.has(msg);
+        let translated = t(msg) || msg;
+        if (!havMsg) {
+          translated = msg;
+        }
         onError(includeField ? `${f.field}: ${translated}` : translated);
       });
     });
@@ -136,5 +140,7 @@ export function handleMutationError(
   }
 
   // --- Single message ---
-  onError(t(error.message) || error.message);
+  let havMsg = t.has(error.message);
+  let translated = havMsg ? t(error.message) : error.message;
+  onError(translated);
 }
