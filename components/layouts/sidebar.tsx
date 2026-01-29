@@ -42,7 +42,6 @@ const CustomSidebar = ({ chats }: { chats: Chat[] }) => {
     setCreating(true);
     try {
       const result = await createNewChat();
-      console.log(result);
       if (result && !(result as any).__isError) {
         router.push(`/${locale}/chat/${result.id}`);
         router.refresh();
