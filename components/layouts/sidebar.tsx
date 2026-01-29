@@ -8,9 +8,9 @@ import {
   useSidebar,
 } from "../ui/sidebar";
 import { useLocale, useTranslations } from "next-intl";
-import { Plus, Sparkles, Hash } from "lucide-react";
+import { Plus, Sparkles, Hash, PenLine } from "lucide-react";
 import { Button } from "../ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { createNewChat } from "@/lib/actions/chat.server.action";
@@ -25,28 +25,45 @@ import {
 import NoData from "../shared/NoData";
 import ChatCard from "../cards/ChatCard";
 import { useChatStore } from "@/lib/store/chat.store";
+import { IBlog } from "@/lib/db/models/Blog";
+import BlogCard from "../cards/BlogCard";
 
 export type Chat = IChat & {
   id: string;
   lastMessage: string;
 };
 
-const CustomSidebar = ({ chats }: { chats: Chat[] }) => {
+export type Blog = IBlog & {
+  id: string;
+  lastMessage: string;
+};
+const CustomSidebar = ({
+  data,
+  type,
+}: {
+  data: Chat[] | Blog[];
+  type: "conversation" | "blog";
+}) => {
   const locale = useLocale();
   const t = useTranslations("chat.sidebar");
   const chat_t = useTranslations("chat");
   const router = useRouter();
+  const pathname = usePathname();
   const [creating, setCreating] = useState(false);
   const { isStreaming } = useChatStore();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+
+  // Determine if we're in conversation or blog page
+  const isInConversation = pathname.includes("/conversation");
+  const isInBlog = pathname.includes("/blog");
 
   const handleNewChat = async () => {
     setCreating(true);
     try {
       const result = await createNewChat();
       if (result && !(result as any).__isError) {
-        router.push(`/${locale}/chat/${result.id}`);
+        router.push(`/${locale}/ai/conversation/chat/${result.id}`);
         router.refresh();
       } else {
         toast.error(chat_t("errors.createChatFailed"));
@@ -74,17 +91,27 @@ const CustomSidebar = ({ chats }: { chats: Chat[] }) => {
               <div className="flex items-center gap-2 mb-3">
                 <div className="flex items-center gap-2 flex-1">
                   <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Sparkles className="h-4 w-4 text-primary" />
+                    {type === "blog" ? (
+                      <PenLine className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 text-primary" />
+                    )}
                   </div>
                   <h2 className="font-bold text-lg">{t("title")}</h2>
                 </div>
               </div>
               <Button
-                onClick={() => router.push(`/${locale}/chat`)}
+                onClick={() =>
+                  router.push(
+                    `/${locale}/ai/${
+                      type === "blog" ? "blog" : "conversation"
+                    }/chat`
+                  )
+                }
                 disabled={creating || isStreaming}
                 className="w-full gap-2"
                 variant="default">
-                {t("chat")}
+                {type === "blog" ? t("blog") : t("chat")}
               </Button>
               <Button
                 onClick={handleNewChat}
@@ -92,7 +119,11 @@ const CustomSidebar = ({ chats }: { chats: Chat[] }) => {
                 className="w-full gap-2"
                 variant="default">
                 <Plus className="h-4 w-4" />
-                {creating ? "Creating..." : t("newChat")}
+                {creating
+                  ? "Creating..."
+                  : type === "blog"
+                  ? t("newBlog")
+                  : t("newChat")}
               </Button>
             </>
           ) : (
@@ -120,7 +151,13 @@ const CustomSidebar = ({ chats }: { chats: Chat[] }) => {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="right">
-                  <p>{creating ? "Creating..." : t("newChat")}</p>
+                  <p>
+                    {creating
+                      ? "Creating..."
+                      : type === "blog"
+                      ? t("newBlog")
+                      : t("newChat")}
+                  </p>
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -131,13 +168,23 @@ const CustomSidebar = ({ chats }: { chats: Chat[] }) => {
         <SidebarContent
           className={cn("transition-all", isCollapsed ? "p-2" : "p-3")}>
           <div className="flex flex-col gap-2">
-            {chats?.map((chat) => {
-              return (
-                <ChatCard key={chat.id} chat={chat} isCollapsed={isCollapsed} />
+            {data?.map((val) => {
+              return type === "conversation" ? (
+                <ChatCard
+                  key={val.id}
+                  chat={val as Chat}
+                  isCollapsed={isCollapsed}
+                />
+              ) : (
+                <BlogCard
+                  key={val.id}
+                  chat={val as Blog}
+                  isCollapsed={isCollapsed}
+                />
               );
             })}
 
-            {chats?.length === 0 && !isCollapsed && <NoData />}
+            {data?.length === 0 && !isCollapsed && <NoData />}
           </div>
         </SidebarContent>
 
@@ -150,33 +197,97 @@ const CustomSidebar = ({ chats }: { chats: Chat[] }) => {
           {!isCollapsed ? (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{t("totalChats")}</span>
+                <span className="text-muted-foreground">
+                  {type === "blog" ? t("totalBlogs") : t("totalChats")}
+                </span>
                 <span className="font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">
-                  {chats.length}
+                  {data.length}
                 </span>
               </div>
+
+              {/* Navigation Link */}
+              {isInConversation && (
+                <Button
+                  onClick={() => router.push(`/${locale}/ai/blog/chat`)}
+                  variant="outline"
+                  className="w-full gap-2 text-sm">
+                  <PenLine className="h-4 w-4" />
+                  {t("goToBlog")}
+                </Button>
+              )}
+
+              {isInBlog && (
+                <Button
+                  onClick={() => router.push(`/${locale}/ai/conversation/chat`)}
+                  variant="outline"
+                  className="w-full gap-2 text-sm">
+                  <Sparkles className="h-4 w-4" />
+                  {t("goToConversation")}
+                </Button>
+              )}
+
               <div className="text-xs text-muted-foreground text-center pt-2 border-t">
                 {t("footer")}
               </div>
             </div>
           ) : (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex flex-col items-center justify-center">
-                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Hash className="h-4 w-4 text-primary" />
+            <div className="flex flex-col items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Hash className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="text-xs font-semibold text-primary mt-1">
+                      {data.length}
+                    </span>
                   </div>
-                  <span className="text-xs font-semibold text-primary mt-1">
-                    {chats.length}
-                  </span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>
-                  {t("totalChats")}: {chats.length}
-                </p>
-              </TooltipContent>
-            </Tooltip>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>
+                    {type === "blog" ? t("totalBlogs") : t("totalChats")}:{" "}
+                    {data.length}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Navigation Icon */}
+              {isInConversation && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => router.push(`/${locale}/blog/chat`)}
+                      size="icon"
+                      variant="outline"
+                      className="h-9 w-9">
+                      <PenLine className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>{t("goToBlog")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
+              {isInBlog && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() =>
+                        router.push(`/${locale}/conversation/chat`)
+                      }
+                      size="icon"
+                      variant="outline"
+                      className="h-9 w-9">
+                      <Sparkles className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>{t("goToConversation")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
           )}
         </SidebarFooter>
       </Sidebar>

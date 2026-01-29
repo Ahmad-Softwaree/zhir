@@ -2,7 +2,6 @@ import { handleServerError } from "../error-handler";
 import { URLs } from "../urls";
 import { revalidateChats } from "./chat.server.action";
 
-// Client-side streaming function (will be called from client component)
 export const sendChat = async (
   message: string,
   chatId: string | undefined,
@@ -11,14 +10,13 @@ export const sendChat = async (
   onNewChatId?: (chatId: string) => void
 ) => {
   try {
-    const response = await fetch(`/api/${URLs.OPEN_AI}`, {
+    const response = await fetch(`/api/${URLs.GENERATE_CHAT}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ message, chatId }),
     });
-    console.log(response);
     if (!response.ok) {
       const error = await response.json().catch(() => ({
         message: response.statusText,

@@ -88,7 +88,7 @@ export default function Header() {
                       size="sm"
                       className="hover:bg-primary/10 hover:text-primary transition-colors"
                       asChild>
-                      <Link href={ENUMs.PAGES.CHAT}>
+                      <Link href={ENUMs.PAGES.AI}>
                         <MessageSquare className="h-4 w-4 mr-2" />
                         {t("header.chat")}
                       </Link>

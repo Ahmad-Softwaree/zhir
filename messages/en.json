@@ -59,6 +59,30 @@
           "description": "Continuously improving to provide better assistance"
         }
       }
+    },
+    "features": {
+      "title": "Powerful AI Features",
+      "subtitle": "Discover the tools that will transform how you work and create with AI",
+      "conversation": {
+        "title": "AI Conversation",
+        "description": "Engage in natural, intelligent conversations with our advanced AI assistant powered by GPT-3.5 Turbo",
+        "badge": "Free",
+        "features": [
+          "Real-time streaming responses",
+          "Context-aware conversations",
+          "Unlimited chat history"
+        ]
+      },
+      "blogGenerator": {
+        "title": "AI Blog Generator",
+        "description": "Generate professional, SEO-optimized blog posts instantly with AI. Just provide a title and description",
+        "badge": "Premium",
+        "features": [
+          "50 coins per payment via Stripe",
+          "High-quality blog content",
+          "SEO-optimized articles"
+        ]
+      }
     }
   },
 
@@ -91,11 +115,64 @@
       "chat": "Chat",
       "newChat": "New Chat",
       "totalChats": "Total Chats",
-      "footer": "Powered by AI Chat"
+      "totalBlogs": "Total Blogs",
+      "footer": "Powered by AI Chat",
+      "goToBlog": "Generate Blog Post",
+      "goToConversation": "Simple Chat",
+      "newBlog": "New Blog",
+      "blog": "Blog"
     },
     "errors": {
       "createChatFailed": "Failed to create new chat. Please try again.",
       "sendMessageFailed": "Failed to send message. Please try again."
+    }
+  },
+
+  "blog": {
+    "welcome": {
+      "title": "Generate Amazing Blogs!",
+      "subtitle": "Transform your ideas into professional blog posts with AI.",
+      "hint": "Click the button above to start generating a new blog",
+      "startNewBlog": "Generate New Blog",
+      "creating": "Creating..."
+    },
+    "input": {
+      "titlePlaceholder": "Enter blog title...",
+      "descriptionPlaceholder": "Enter blog description...",
+      "titleLabel": "Blog Title",
+      "descriptionLabel": "Blog Description",
+      "generateButton": "Generate Blog",
+      "generating": "Generating..."
+    },
+    "errors": {
+      "createBlogFailed": "Failed to create new blog. Please try again.",
+      "generateBlogFailed": "Failed to generate blog. Please try again."
+    }
+  },
+
+  "chatSelection": {
+    "title": "Choose Your AI Experience",
+    "subtitle": "Select how you want to interact with our AI assistant",
+    "getStarted": "Get Started",
+    "conversation": {
+      "title": "AI Conversation",
+      "description": "Have a natural, flowing conversation with our AI assistant",
+      "badge": "Free",
+      "features": [
+        "Unlimited conversations",
+        "Real-time responses",
+        "Context-aware chat"
+      ]
+    },
+    "blogGenerator": {
+      "title": "Blog Post Generator",
+      "description": "Generate professional blog posts with AI",
+      "badge": "Premium",
+      "features": [
+        "50 coins per payment",
+        "SEO-optimized content",
+        "Professional articles"
+      ]
     }
   },
 

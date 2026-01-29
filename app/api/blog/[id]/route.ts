@@ -1,8 +1,8 @@
 import { auth0 } from "@/lib/auth0";
-import Chat from "@/lib/db/models/Chat";
 import connectDB from "@/lib/db/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
+import Blog from "@/lib/db/models/Blog";
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -16,20 +16,20 @@ export async function GET(
     const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
-        { error: "Invalid chat ID format" },
+        { error: "Invalid blog ID format" },
         { status: 400 }
       );
     }
     await connectDB();
 
     const userId = session.user.sub;
-    const chat = await Chat.findOne({ _id: id, userId });
+    const blog = await Blog.findOne({ _id: id, userId });
 
-    if (!chat) {
-      return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+    if (!blog) {
+      return NextResponse.json({ error: "Blog not found" }, { status: 404 });
     }
 
-    return NextResponse.json(chat);
+    return NextResponse.json(blog);
   } catch (error: any) {
     return NextResponse.json(
       {
@@ -55,17 +55,17 @@ export async function DELETE(
     const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
-        { error: "Invalid chat ID format" },
+        { error: "Invalid blog ID format" },
         { status: 400 }
       );
     }
     await connectDB();
     const userId = session.user.sub;
-    const chat = await Chat.findOneAndDelete({ _id: id, userId });
-    if (!chat) {
-      return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+    const blog = await Blog.findOneAndDelete({ _id: id, userId });
+    if (!blog) {
+      return NextResponse.json({ error: "Blog not found" }, { status: 404 });
     }
-    return NextResponse.json({ message: "Chat deleted successfully" });
+    return NextResponse.json({ message: "Blog deleted successfully" });
   } catch (error: any) {
     return NextResponse.json(
       {

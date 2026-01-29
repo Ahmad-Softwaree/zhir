@@ -5,5 +5,11 @@ export const URLs = {
   GET_CHAT: (id: string) => `/chat/${id}`,
   DELETE_CHAT: "/chat",
   GET_ALL_CHATS: "/chats",
-  OPEN_AI: "/openai",
+  GENERATE_CHAT: "/openai/chat",
+  // Blog endpoints
+  CREATE_NEW_BLOG: "/blog/new",
+  GET_BLOG: (id: string) => `/blog/${id}`,
+  DELETE_BLOG: "/blog",
+  GET_ALL_BLOGS: "/blogs",
+  GENERATE_BLOG: "/openai/blog",
 } as const;

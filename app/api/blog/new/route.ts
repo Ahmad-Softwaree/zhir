@@ -1,33 +1,37 @@
 import { auth0 } from "@/lib/auth0";
-import Chat from "@/lib/db/models/Chat";
+import Blog from "@/lib/db/models/Blog";
+import User from "@/lib/db/models/User";
 import connectDB from "@/lib/db/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const session = await auth0.getSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    let user = await User.findOne({ auth0Id: session.user.sub });
+    if (!user) {
+      user = await User.create({ auth0Id: session.user.sub });
+    }
+    if (user.coins <= 0) {
+      return NextResponse.json({ error: "No coins left" }, { status: 403 });
+    }
+
     await connectDB();
 
     const userId = session.user.sub;
-    const chats = await Chat.find({ userId })
-      .sort({ updatedAt: -1 })
-      .select("_id title conversations updatedAt")
-      .lean();
 
-    const formattedChats = chats.map((chat) => ({
-      id: chat._id.toString(),
-      title: chat.title,
-      lastMessage:
-        chat.conversations[chat.conversations.length - 1]?.userMessage ||
-        "No messages",
-      updatedAt: chat.updatedAt,
-    }));
+    const blog = await Blog.create({
+      userId,
+      title: "New Blog",
+      status: "pending",
+    });
 
-    return NextResponse.json(formattedChats);
+    return NextResponse.json({
+      id: blog._id,
+    });
   } catch (error: any) {
     return NextResponse.json(
       {

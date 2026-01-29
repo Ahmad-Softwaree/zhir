@@ -1,7 +1,7 @@
 import { auth0 } from "@/lib/auth0";
-import Chat from "@/lib/db/models/Chat";
 import connectDB from "@/lib/db/mongodb";
 import { NextRequest, NextResponse } from "next/server";
+import Blog from "../../../lib/db/models/Blog";
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,21 +13,21 @@ export async function GET(request: NextRequest) {
     await connectDB();
 
     const userId = session.user.sub;
-    const chats = await Chat.find({ userId })
+    const blogs = await Blog.find({ userId })
       .sort({ updatedAt: -1 })
-      .select("_id title conversations updatedAt")
+      .select("_id title conversation updatedAt")
       .lean();
 
-    const formattedChats = chats.map((chat) => ({
-      id: chat._id.toString(),
-      title: chat.title,
+    const formattedBlogs = blogs.map((blog) => ({
+      id: blog._id.toString(),
+      title: blog.title,
       lastMessage:
-        chat.conversations[chat.conversations.length - 1]?.userMessage ||
+        blog.conversation[blog.conversation.length - 1]?.userMessage ||
         "No messages",
-      updatedAt: chat.updatedAt,
+      updatedAt: blog.updatedAt,
     }));
 
-    return NextResponse.json(formattedChats);
+    return NextResponse.json(formattedBlogs);
   } catch (error: any) {
     return NextResponse.json(
       {

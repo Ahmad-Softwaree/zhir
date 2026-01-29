@@ -1,5 +1,5 @@
 "use client";
-import { Chat } from "../layouts/sidebar";
+import { Blog, Chat } from "../layouts/sidebar";
 import {
   Tooltip,
   TooltipContent,
@@ -14,24 +14,23 @@ import { useState } from "react";
 import { deleteChat } from "@/lib/actions/chat.server.action";
 import { useParams } from "next/navigation";
 import { useChatStore } from "@/lib/store/chat.store";
-const ChatCard = ({
+import { deleteBlog } from "@/lib/actions/blog.action";
+const BlogCard = ({
   chat,
   isCollapsed,
 }: {
-  chat: Chat;
+  chat: Blog;
   isCollapsed: boolean;
 }) => {
   const router = useRouter();
   const pathname = usePathname();
   const { id } = useParams();
   const [isDeleting, setIsDeleting] = useState(false);
-  const { isStreaming } = useChatStore();
 
-  const isActive = pathname.includes(`/ai/conversation/chat/${chat.id}`);
+  const isActive = pathname.includes(`/ai/blog/chat/${chat.id}`);
 
-  const handleChatClick = (chatId: string) => {
-    if (isStreaming) return;
-    router.push(`/ai/conversation/chat/${chatId}`);
+  const handleBlogClick = (chatId: string) => {
+    router.push(`/ai/blog/chat/${chatId}`);
   };
 
   if (isCollapsed) {
@@ -39,7 +38,7 @@ const ChatCard = ({
       <Tooltip key={chat.id}>
         <TooltipTrigger asChild>
           <Card
-            onClick={() => handleChatClick(chat.id)}
+            onClick={() => handleBlogClick(chat.id)}
             className={cn(
               "p-2 cursor-pointer transition-all hover:shadow-md flex items-center justify-center aspect-square",
               isActive
@@ -67,7 +66,7 @@ const ChatCard = ({
   return (
     <Card
       key={chat.id}
-      onClick={() => handleChatClick(chat.id)}
+      onClick={() => handleBlogClick(chat.id)}
       className={cn(
         "p-4 cursor-pointer transition-all hover:shadow-md",
         isActive
@@ -98,14 +97,14 @@ const ChatCard = ({
           </div>
         </div>
         <Button
-          disabled={isDeleting || isStreaming}
+          disabled={isDeleting}
           onClick={(e) => {
             e.stopPropagation();
             setIsDeleting(true);
-            deleteChat(chat.id).finally(() => setIsDeleting(false));
+            deleteBlog(chat.id).finally(() => setIsDeleting(false));
 
             if (id === chat.id) {
-              router.push("/ai/conversation/chat");
+              router.push("/ai/blog/chat");
             }
           }}
           asChild
@@ -118,4 +117,4 @@ const ChatCard = ({
   );
 };
 
-export default ChatCard;
+export default BlogCard;

@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sparkles, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { ENUMs } from "@/lib/enums";
 
 export default async function SignUpPage() {
   const locale = await getLocale();
@@ -19,7 +20,7 @@ export default async function SignUpPage() {
   // Redirect authenticated users to chat
   const session = await auth0.getSession();
   if (session?.user) {
-    redirect(`/${locale}/chat`);
+    redirect(`/${locale}/${ENUMs.PAGES.AI}`);
   }
 
   return (

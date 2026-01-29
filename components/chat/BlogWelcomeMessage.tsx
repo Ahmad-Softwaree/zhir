@@ -1,32 +1,33 @@
 "use client";
 import { useTranslations, useLocale } from "next-intl";
-import { MessageCircle, Sparkles, Plus, Loader2 } from "lucide-react";
+import { PenLine, Sparkles, Plus, Loader2 } from "lucide-react";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { useState } from "react";
-import { createNewChat } from "@/lib/actions/chat.server.action";
+import { createNewBlog } from "@/lib/actions/blog.action";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import BlogInput from "./BlogInput";
 
-const WelcomeMessage = () => {
-  const t = useTranslations("chat");
+const BlogWelcomeMessage = () => {
+  const t = useTranslations("blog");
   const locale = useLocale();
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
 
-  const handleNewChat = async () => {
+  const handleNewBlog = async () => {
     setIsCreating(true);
     try {
-      const result = await createNewChat();
+      const result = await createNewBlog();
 
       if (result && !(result as any).__isError) {
-        router.push(`/${locale}/ai/conversation/chat/${result.id}`);
+        router.push(`/${locale}/ai/blog/chat/${result.id}`);
         router.refresh();
       } else {
-        toast.error(t("errors.createChatFailed"));
+        toast.error(t("errors.createBlogFailed"));
       }
     } catch (error) {
-      toast.error(t("errors.createChatFailed"));
+      toast.error(t("errors.createBlogFailed"));
     } finally {
       setIsCreating(false);
     }
@@ -37,10 +38,7 @@ const WelcomeMessage = () => {
       <Card className="max-w-2xl p-12 text-center space-y-6 border-dashed border-2">
         <div className="flex justify-center">
           <div className="relative">
-            <MessageCircle
-              className="h-24 w-24 text-primary"
-              strokeWidth={1.5}
-            />
+            <PenLine className="h-24 w-24 text-primary" strokeWidth={1.5} />
             <Sparkles className="h-8 w-8 text-yellow-500 absolute -top-2 -right-2 animate-pulse" />
           </div>
         </div>
@@ -54,24 +52,10 @@ const WelcomeMessage = () => {
           </p>
         </div>
 
-        <div className="pt-4">
-          <Button
-            onClick={handleNewChat}
-            disabled={isCreating}
-            size="lg"
-            className="gap-2 text-lg px-8 py-6">
-            {isCreating ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                {t("welcome.creating")}
-              </>
-            ) : (
-              <>
-                <Plus className="h-5 w-5" />
-                {t("welcome.startNewChat")}
-              </>
-            )}
-          </Button>
+        <div className="bg-background">
+          <Card className="border-0 border-t rounded-none shadow-none">
+            <BlogInput />
+          </Card>
         </div>
 
         <div className="pt-2">
@@ -82,4 +66,4 @@ const WelcomeMessage = () => {
   );
 };
 
-export default WelcomeMessage;
+export default BlogWelcomeMessage;

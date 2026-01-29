@@ -155,7 +155,7 @@ export default async function SignInPage() {
   // Redirect authenticated users to chat
   const session = await auth0.getSession();
   if (session?.user) {
-    redirect(`/${locale}/chat`);
+    redirect(`/${locale}/${ENUMs.PAGES.AI}`);
   }
 
   return (

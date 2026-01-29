@@ -60,10 +60,10 @@ const ChatInput = () => {
         }
       );
     } catch (error) {
-      console.log(error);
       handleMutationError(error, t, t("errors.sendMessageFailed"), (msg) => {
         toast.error(msg);
       });
+    } finally {
       setIsLoading(false);
       setStreaming(false);
     }

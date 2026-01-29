@@ -3,8 +3,9 @@
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
-import Link from "next/link";
 import { AnimateOnScroll } from "@/components/shared/animate";
+import { ENUMs } from "@/lib/enums";
+import { Link } from "@/i18n/navigation";
 
 export default function Hero() {
   const t = useTranslations("home.hero");
@@ -47,7 +48,7 @@ export default function Hero() {
               asChild
               size="lg"
               className="text-base px-8 py-6 rounded-full group">
-              <Link href="/chat">
+              <Link href={ENUMs.PAGES.AI}>
                 {t("goToChat")}
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -58,7 +59,7 @@ export default function Hero() {
               size="lg"
               variant="outline"
               className="text-base px-8 py-6 rounded-full">
-              <Link href="/login">{t("learnMore")}</Link>
+              <Link href={ENUMs.PAGES.SIGNUP}>{t("learnMore")}</Link>
             </Button>
           </div>
         </AnimateOnScroll>

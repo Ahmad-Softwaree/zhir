@@ -1,17 +1,20 @@
 "use client";
+
 import { useChatStore } from "@/lib/store/chat.store";
 import { UserMessage } from "./UserMessage";
 import { AiMessage } from "./AiMessage";
 import { IChat } from "@/lib/db/models/Chat";
+import { IBlog } from "@/lib/db/models/Blog";
 import { useEffect, useRef } from "react";
 
-const ChatMessages = ({ data }: { data: IChat }) => {
+export const ConversationCard = ({ data }: { data: IChat }) => {
   const { currentUserMessage, currentAiResponse, isStreaming } = useChatStore();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [currentAiResponse, currentUserMessage, isStreaming]);
+
   return (
     <div className="space-y-6">
       {data.conversations?.map((chat, index) => (
@@ -32,4 +35,13 @@ const ChatMessages = ({ data }: { data: IChat }) => {
   );
 };
 
-export default ChatMessages;
+export const BlogCard = ({ data }: { data: IBlog }) => {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <UserMessage message={data.conversation.userMessage} />
+        <AiMessage message={data.conversation.aiResponse} />
+      </div>
+    </div>
+  );
+};

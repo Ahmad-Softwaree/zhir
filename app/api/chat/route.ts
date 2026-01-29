@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     return NextResponse.json(
       {
-        error:
+        message:
           process.env.NODE_ENV === "development"
             ? error.message
             : "Internal Server Error",
