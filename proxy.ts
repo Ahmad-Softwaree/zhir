@@ -7,7 +7,7 @@ import { routing } from "./i18n/routing";
 const intlMiddleware = createIntlMiddleware(routing);
 const STRIPE_WEBHOOK = "/api/stripe/webhook";
 const isProtectedRoute = (pathname: string) => {
-  return pathname.match(/^\/[^\/]+\/chat(?:\/[a-f0-9]{24})?$/);
+  return pathname.match(/^\/[^\/]+\/ai(?:\/[a-f0-9]{24})?$/);
 };
 
 const isApiRoute = (pathname: string) => {
