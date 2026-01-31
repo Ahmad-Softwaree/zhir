@@ -42,7 +42,7 @@ export default async function SignUpPage() {
             asChild
             className="w-full bg-gradient-to-r from-primary to-secondary hover:shadow-lg hover:shadow-primary/30 transition-all duration-300"
             size="lg">
-            <Link href="/api/auth/signup">
+            <Link href="/auth/login">
               <Sparkles className="mr-2 h-5 w-5" />
               {t("auth.signup.button")}
             </Link>
