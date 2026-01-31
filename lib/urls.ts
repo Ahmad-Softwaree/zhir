@@ -12,4 +12,7 @@ export const URLs = {
   DELETE_BLOG: "/blog",
   GET_ALL_BLOGS: "/blogs",
   GENERATE_BLOG: "/openai/blog",
+  GET_AUTH: "/auth",
+  GET_PAYMENTS: "/stripe/payment",
+  ADD_PAYMENT: "/stripe/payment",
 } as const;

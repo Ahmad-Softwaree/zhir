@@ -63,6 +63,7 @@
     "recharts": "2.15.4",
     "sharp": "^0.34.5",
     "sonner": "^2.0.7",
+    "stripe": "^20.3.0",
     "tailwind-animate": "^0.2.10",
     "tailwind-merge": "^3.4.0",
     "uuid": "^13.0.0",

@@ -8,7 +8,7 @@ import {
   useSidebar,
 } from "../ui/sidebar";
 import { useLocale, useTranslations } from "next-intl";
-import { Plus, Sparkles, Hash, PenLine } from "lucide-react";
+import { Plus, Sparkles, Hash, PenLine, Coins, CreditCard } from "lucide-react";
 import { Button } from "../ui/button";
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,9 @@ import ChatCard from "../cards/ChatCard";
 import { useChatStore } from "@/lib/store/chat.store";
 import { IBlog } from "@/lib/db/models/Blog";
 import BlogCard from "../cards/BlogCard";
+import { useAuthStore } from "@/lib/store/auth.store";
+import { addPayment } from "@/lib/actions/payment.action";
+import { handleMutationError } from "@/lib/error-handler";
 
 export type Chat = IChat & {
   id: string;
@@ -47,16 +50,22 @@ const CustomSidebar = ({
   const locale = useLocale();
   const t = useTranslations("chat.sidebar");
   const chat_t = useTranslations("chat");
+  const payment_t = useTranslations("payment");
+  const coins_t = useTranslations("coins");
   const router = useRouter();
   const pathname = usePathname();
   const [creating, setCreating] = useState(false);
+  const [purchasing, setPurchasing] = useState(false);
   const { isStreaming } = useChatStore();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const { auth } = useAuthStore();
 
-  // Determine if we're in conversation or blog page
   const isInConversation = pathname.includes("/conversation");
   const isInBlog = pathname.includes("/blog");
+
+  const userCoins = auth?.coins || 0;
+  const hasNoCoins = userCoins === 0;
 
   const handleNewChat = async () => {
     setCreating(true);
@@ -72,6 +81,38 @@ const CustomSidebar = ({
       toast.error(chat_t("errors.createChatFailed"));
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleBuyCredits = async () => {
+    setPurchasing(true);
+    try {
+      const result = await addPayment();
+      if (result && !(result as any).__isError) {
+        if ((result as any).url) {
+          window.location.href = (result as any).url;
+        }
+      } else {
+        handleMutationError(
+          result,
+          payment_t,
+          payment_t("failed"),
+          (message: string) => {
+            toast.error(message);
+          }
+        );
+      }
+    } catch (error) {
+      handleMutationError(
+        error,
+        payment_t,
+        payment_t("failed"),
+        (message: string) => {
+          toast.error(message);
+        }
+      );
+    } finally {
+      setPurchasing(false);
     }
   };
 
@@ -100,6 +141,29 @@ const CustomSidebar = ({
                   <h2 className="font-bold text-lg">{t("title")}</h2>
                 </div>
               </div>
+
+              {/* Coin Display */}
+              {(isInBlog || isInConversation) && auth && (
+                <div className="mb-3 p-3 rounded-lg bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Coins className="h-4 w-4 text-amber-500" />
+                      <span className="text-sm font-medium">
+                        {coins_t("balance")}
+                      </span>
+                    </div>
+                    <span className="text-lg font-bold text-amber-500">
+                      {userCoins}
+                    </span>
+                  </div>
+                  {isInBlog && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {coins_t("required")}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <Button
                 onClick={() =>
                   router.push(
@@ -108,14 +172,14 @@ const CustomSidebar = ({
                     }/chat`
                   )
                 }
-                disabled={creating || isStreaming}
+                disabled={(isInBlog && hasNoCoins) || creating || isStreaming}
                 className="w-full gap-2"
                 variant="default">
                 {type === "blog" ? t("blog") : t("chat")}
               </Button>
               <Button
                 onClick={handleNewChat}
-                disabled={creating || isStreaming}
+                disabled={(isInBlog && hasNoCoins) || creating || isStreaming}
                 className="w-full gap-2"
                 variant="default">
                 <Plus className="h-4 w-4" />
@@ -125,6 +189,19 @@ const CustomSidebar = ({
                   ? t("newBlog")
                   : t("newChat")}
               </Button>
+
+              {isInBlog && (
+                <Button
+                  onClick={handleBuyCredits}
+                  disabled={purchasing}
+                  className="w-full gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
+                  variant="default">
+                  <CreditCard className="h-4 w-4" />
+                  {purchasing
+                    ? payment_t("purchasing")
+                    : payment_t("buyCredits")}
+                </Button>
+              )}
             </>
           ) : (
             <div className="flex flex-col gap-2 items-center">
@@ -139,11 +216,32 @@ const CustomSidebar = ({
                 </TooltipContent>
               </Tooltip>
 
+              {/* Coin Display - Collapsed */}
+              {(isInBlog || isInConversation) && auth && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex flex-col items-center justify-center p-2 rounded-lg bg-amber-500/10">
+                      <Coins className="h-4 w-4 text-amber-500" />
+                      <span className="text-xs font-bold text-amber-500 mt-1">
+                        {userCoins}
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>
+                      {coins_t("balance")}: {userCoins}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     onClick={handleNewChat}
-                    disabled={creating || isStreaming}
+                    disabled={
+                      (isInBlog && hasNoCoins) || creating || isStreaming
+                    }
                     size="icon"
                     className="h-9 w-9"
                     variant="default">
@@ -160,6 +258,25 @@ const CustomSidebar = ({
                   </p>
                 </TooltipContent>
               </Tooltip>
+
+              {/* Buy Credits Button - Collapsed */}
+              {isInBlog && hasNoCoins && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={handleBuyCredits}
+                      disabled={purchasing}
+                      size="icon"
+                      className="h-9 w-9 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600"
+                      variant="default">
+                      <CreditCard className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>{payment_t("buyCredits")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
           )}
         </SidebarHeader>

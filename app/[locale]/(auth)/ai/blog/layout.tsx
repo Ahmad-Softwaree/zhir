@@ -6,7 +6,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import React from "react";
 import CustomError from "@/components/CustomError";
 import { getAllBlogs } from "@/lib/actions/blog.action";
-import BlogInput from "@/components/chat/BlogInput";
 
 const layout = async ({ children }: { children: React.ReactNode }) => {
   const data = await getAllBlogs();

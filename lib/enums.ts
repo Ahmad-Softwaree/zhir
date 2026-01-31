@@ -8,6 +8,8 @@ export const ENUMs = {
     CHAT: "chat",
     BLOGS: "blogs",
     BLOG: "blog",
+    AUTH: "auth",
+    PAYMENTS: "payments",
   },
   PAGES: {
     HOME: "/",

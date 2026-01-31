@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Home, LogIn, LogOut, Sparkles, MessageSquare } from "lucide-react";
+import {
+  Home,
+  LogIn,
+  LogOut,
+  Sparkles,
+  MessageSquare,
+  CreditCard,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
@@ -20,10 +27,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "../ui/sidebar";
+import { useLocale } from "next-intl";
 
 export default function Header() {
   const { user, isLoading } = useUser();
   const t = useTranslations();
+  const locale = useLocale();
   const pathname = usePathname();
   const isHomePage = pathname === ENUMs.PAGES.HOME;
   const isChatPage = pathname.startsWith(ENUMs.PAGES.CHAT);
@@ -125,8 +134,18 @@ export default function Header() {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={`/${locale}/ai/payments`}
+                          className="cursor-pointer">
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          <span>{t("header.payments")}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem>
                         <Button asChild variant="ghost" className="w-full">
+                          \n{" "}
                           <Link href="/auth/logout">
                             <LogOut className="mr-2 h-4 w-4" />
                             <span>{t("header.logout")}</span>

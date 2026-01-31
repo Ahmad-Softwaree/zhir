@@ -16,12 +16,8 @@ const BlogInput = () => {
   const t = useTranslations("blog.input");
   const blog_t = useTranslations("blog.errors");
   const router = useRouter();
-  const [title, setTitle] = useState(
-    "The Importance of Staying Hydrated Every Day"
-  );
-  const [description, setDescription] = useState(
-    "A short blog explaining why drinking enough water matters for health, energy, skin, and overall well-being, written in a simple and friendly tone."
-  );
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {

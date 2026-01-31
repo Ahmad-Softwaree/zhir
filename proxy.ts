@@ -5,7 +5,7 @@ import createIntlMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
 
 const intlMiddleware = createIntlMiddleware(routing);
-
+const STRIPE_WEBHOOK = "/api/stripe/webhook";
 const isProtectedRoute = (pathname: string) => {
   return pathname.match(/^\/[^\/]+\/chat(?:\/[a-f0-9]{24})?$/);
 };
@@ -26,7 +26,9 @@ export default async function middleware(request: NextRequest) {
   if (isPublicFile(pathname)) {
     return NextResponse.next();
   }
-
+  if (pathname === STRIPE_WEBHOOK) {
+    return NextResponse.next();
+  }
   if (pathname.startsWith("/auth")) {
     return await auth0.middleware(request);
   }
@@ -51,5 +53,5 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/stripe/webhook).*)"],
 };

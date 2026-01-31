@@ -11,7 +11,9 @@
     "signUp": "Sign Up",
     "chat": "Chat",
     "logout": "Logout",
-    "projectName": "AI Chat"
+    "projectName": "AI Chat",
+    "payments": "Payment History",
+    "account": "Account"
   },
 
   "auth": {
@@ -181,6 +183,46 @@
     "of": "of",
     "previous": "Previous",
     "next": "Next"
+  },
+
+  "payment": {
+    "title": "Payment History",
+    "subtitle": "View all your payment transactions",
+    "buyCredits": "Buy 10 Credits",
+    "coins": "Coins",
+    "noCoins": "No coins available",
+    "amount": "Amount",
+    "status": "Status",
+    "date": "Date",
+    "description": "Description",
+    "noPayments": "No payments yet",
+    "purchasing": "Processing...",
+    "success": "Payment successful! 10 coins added.",
+    "failed": "Payment failed. Please try again."
+  },
+
+  "coins": {
+    "balance": "Coin Balance",
+    "remaining": "remaining",
+    "required": "1 coin per blog"
+  },
+
+  "paymentSuccess": {
+    "title": "Payment Successful!",
+    "subtitle": "Your credits have been added to your account",
+    "message": "Thank you for your purchase. 10 credits have been successfully added to your account. You can now generate amazing blog posts!",
+    "creditsAdded": "Credits Added",
+    "goToBlog": "Start Generating Blogs",
+    "goHome": "Back to Home"
+  },
+
+  "paymentCancelled": {
+    "title": "Payment Cancelled",
+    "subtitle": "Your payment was not completed",
+    "message": "No charges were made to your account. If you encountered any issues, please try again or contact support.",
+    "tryAgain": "Try Again",
+    "goToBlog": "Back to Blog",
+    "goHome": "Back to Home"
   },
 
   "error": {

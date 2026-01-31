@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    await connectDB();
 
     let user = await User.findOne({ auth0Id: session.user.sub });
     if (!user) {
@@ -18,8 +19,6 @@ export async function POST(request: NextRequest) {
     if (user.coins <= 0) {
       return NextResponse.json({ error: "No coins left" }, { status: 403 });
     }
-
-    await connectDB();
 
     const userId = session.user.sub;
 

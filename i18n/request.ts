@@ -9,6 +9,7 @@ declare module "next-intl" {
     Messages: typeof messages;
   }
 }
+export type Locale = (typeof routing.locales)[number];
 
 export default getRequestConfig(async ({ requestLocale }) => {
   const requested = await requestLocale;
